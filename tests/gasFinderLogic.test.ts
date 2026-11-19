@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  gasFinderBrandOptions,
   gasFinderComputeStats,
   gasFinderFilterStations,
   gasFinderSortStations,
@@ -21,6 +22,7 @@ const PARIS = { lat: 48.8566, lon: 2.3522 };
 const BASE_CRITERIA: GasFinderCriteria = {
   fuel: 'gazole',
   department: 'TOUS',
+  brand: 'TOUS',
   search: '',
   sortBy: 'price_asc',
   userCoords: null,
@@ -91,6 +93,29 @@ test('busca en dirección, municipio y código postal sin distinguir tildes ni m
   assert.deepEqual(filter([makeStation('apo', { city: "L'Isle-d'Abeau" })], { search: 'l isle d abeau' }), ['apo']);
   assert.deepEqual(filter([makeStation('st', { city: 'Saint-Étienne' })], { search: 'saint etienne' }), ['st']);
   assert.deepEqual(filter(stations, { search: 'ÉVRY' }), ['acc']);
+});
+
+test('filtra por enseña y ofrece solo las redes presentes, en el orden de la tabla', () => {
+  const stations = [
+    makeStation('a', { brandSlug: 'carrefour', name: 'Carrefour Market' }),
+    makeStation('b', { brandSlug: 'totalenergies', name: 'Total Access' }),
+    makeStation('c'),
+  ];
+  assert.deepEqual(filter(stations, { brand: 'carrefour' }), ['a']);
+  assert.deepEqual(filter(stations, { brand: 'TOUS' }), ['a', 'b', 'c']);
+  assert.deepEqual(gasFinderBrandOptions(stations).map((group) => group.slug), ['totalenergies', 'carrefour']);
+});
+
+test('la búsqueda de texto también mira el nombre comercial', () => {
+  const stations = [makeStation('a', { name: 'Intermarché Contact' }), makeStation('b')];
+  assert.deepEqual(filter(stations, { search: 'intermarche' }), ['a']);
+});
+
+test('mapa: el popup usa el nombre comercial como título y lo escapa', () => {
+  const html = buildStationPopupHtml(makeStation('9', { name: 'Le <Relais> & Co' }), 1.7);
+  assert.match(html, /station-popup__name">Le &lt;Relais&gt; &amp; Co</);
+  assert.doesNotMatch(html, /<Relais>/);
+  assert.match(buildStationPopupHtml(makeStation('9'), 1.7), /station-popup__name">Paris</);
 });
 
 test('filtra por radio GPS y añade la distancia', () => {

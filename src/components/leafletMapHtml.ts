@@ -4,6 +4,7 @@ import { DEFAULT_FUEL } from '../lib/fuels.ts';
 import { formatInteger, formatPrice, formatPricePerLiter } from '../lib/format.ts';
 import { stationPath } from '../lib/prixCarburants.ts';
 import { assetPath } from '../lib/site.ts';
+import { stationCommercialTitle } from '../lib/stationHeading.ts';
 
 interface ClusterSizeTier {
   /** El grupo usa este nivel si su número de miembros es menor que este umbral. */
@@ -93,7 +94,9 @@ export function buildPinIconSpec(station: LightStation, price: number | null, is
 
 function buildPopupAddress(station: LightStation): string {
   const roadBadge = station.roadType === 'autoroute' ? `<strong>${MOTORWAY_LABEL}</strong> · ` : '';
-  return `${roadBadge}${escapeHtml(station.address)}, ${escapeHtml(station.postalCode)}`;
+  // Con nombre comercial el título ya no es el municipio: se añade a la dirección.
+  const cityPart = stationCommercialTitle(station) ? ` ${escapeHtml(station.city)}` : '';
+  return `${roadBadge}${escapeHtml(station.address)}, ${escapeHtml(station.postalCode)}${cityPart}`;
 }
 
 /** HTML del popup de una estación; se genera solo al abrirlo. */
@@ -103,7 +106,7 @@ export function buildStationPopupHtml(station: LightStation, price: number | nul
   const priceText = price === null ? 'Prix indisponible' : formatPricePerLiter(price);
   return `
     <div class="station-popup">
-      <div class="station-popup__name">${escapeHtml(station.city)}</div>
+      <div class="station-popup__name">${escapeHtml(stationCommercialTitle(station) ?? station.city)}</div>
       <div class="station-popup__address">${buildPopupAddress(station)}</div>
       <div class="station-popup__price">${priceText}</div>
       <div class="station-popup__actions">

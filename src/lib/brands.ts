@@ -43,7 +43,8 @@ const BRANDS_COMBINING_MARKS = /\p{M}/gu;
 const BRANDS_NON_ALPHANUMERIC = /[^a-z0-9]+/g;
 const BRANDS_WORD_SEPARATOR = ' ';
 
-export function findBrandGroupBySlug(slug: string): BrandGroup | null {
+export function findBrandGroupBySlug(slug: string | null): BrandGroup | null {
+  if (slug === null) return null;
   return BRAND_GROUPS.find((group) => group.slug === slug) ?? null;
 }
 

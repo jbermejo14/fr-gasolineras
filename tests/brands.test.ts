@@ -27,6 +27,7 @@ test('findBrandGroupBySlug encuentra una red o devuelve null', () => {
   assert.equal(findBrandGroupBySlug('leclerc')?.name, 'E.Leclerc');
   assert.equal(findBrandGroupBySlug('systeme-u')?.name, 'Système U');
   assert.equal(findBrandGroupBySlug('inexistente'), null);
+  assert.equal(findBrandGroupBySlug(null), null);
 });
 
 test('cada red se reconoce por el nombre de la tabla', () => {

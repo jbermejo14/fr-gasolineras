@@ -35,3 +35,12 @@ test('Header separa fecha y hora con el mismo texto que produce formatDateTimePa
   const parts = formatDateTimeParis('2026-11-19T10:09:48+00:00').split(separator);
   assert.deepEqual(parts, ['19/11/2026', '11:09']);
 });
+
+test('el distintivo de marca delega la elección en brandBadgeSpec y fija las dimensiones del logo', () => {
+  const badge = fs.readFileSync(path.join(SOURCE_DIR, 'components', 'StationBrandBadge.tsx'), 'utf8');
+  assert.ok(badge.includes("brandBadgeSpec(name, brandSlug)"));
+  assert.ok(badge.includes("if (!spec) return null;"));
+  assert.ok(badge.includes("alt={spec.alt}"));
+  assert.ok(badge.includes("width={LOGO_MAX_WIDTH_PX}"));
+  assert.ok(badge.includes("height={LOGO_HEIGHT_PX[size]}"));
+});

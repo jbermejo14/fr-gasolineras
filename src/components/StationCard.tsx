@@ -2,7 +2,9 @@ import React from 'react';
 import { InternalLink } from '@/components/InternalLink';
 import { FUEL_SHORT_LABELS, FUEL_TYPES, type FuelType } from '@/lib/fuels';
 import { formatPrice } from '@/lib/format';
+import { StationBrandBadge } from '@/components/StationBrandBadge';
 import { stationPath } from '@/lib/prixCarburants';
+import { stationCommercialTitle } from '@/lib/stationHeading';
 import type { LightStation } from '@/lib/stationPayload';
 import { MapPin, Navigation } from 'lucide-react';
 
@@ -22,6 +24,7 @@ function secondaryFuelsOf(station: LightStation, selectedFuel: FuelType): FuelTy
 export function StationCard({ station, selectedFuel, isCheapest = false }: StationCardProps) {
   const currentPrice = station.prices[selectedFuel];
   const stationUrl = stationPath(station);
+  const commercialTitle = stationCommercialTitle(station);
   const navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}`;
 
   return (
@@ -33,14 +36,17 @@ export function StationCard({ station, selectedFuel, isCheapest = false }: Stati
       }`}
     >
       <div className="flex items-center justify-between gap-2 min-w-0">
-        <h3 className="min-w-0">
-          <InternalLink
-            href={stationUrl}
-            className="inline-block min-w-0 max-w-full break-words px-2.5 py-1 rounded bg-[var(--bg-input)] border border-[var(--orange-border)] hover:border-[var(--orange-primary)] text-[var(--orange-primary)] text-xs font-bold uppercase tracking-tight transition-colors"
-          >
-            {station.city}
-          </InternalLink>
-        </h3>
+        <div className="flex items-center gap-2 min-w-0">
+          <StationBrandBadge name={station.name} brandSlug={station.brandSlug} size="sm" />
+          <h3 className="min-w-0">
+            <InternalLink
+              href={stationUrl}
+              className="inline-block min-w-0 max-w-full break-words px-2.5 py-1 rounded bg-[var(--bg-input)] border border-[var(--orange-border)] hover:border-[var(--orange-primary)] text-[var(--orange-primary)] text-xs font-bold uppercase tracking-tight transition-colors"
+            >
+              {commercialTitle ?? station.city}
+            </InternalLink>
+          </h3>
+        </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           {station.roadType === 'autoroute' && (
@@ -60,6 +66,7 @@ export function StationCard({ station, selectedFuel, isCheapest = false }: Stati
         <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[var(--text-dim)]" />
         <span className="min-w-0 break-words">
           {station.address}, {station.postalCode}
+          {commercialTitle && ` ${station.city}`}
         </span>
       </p>
 

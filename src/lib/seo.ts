@@ -1,3 +1,4 @@
+import { findBrandGroupBySlug } from './brands.ts';
 import { SITE_NAME } from './site.ts';
 import { FUEL_LABELS, FUEL_TYPES } from './fuels.ts';
 import type { HistoryFuel } from './historiqueFormat.ts';
@@ -47,7 +48,7 @@ export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>)
 /** Campos de la estación que usa el JSON-LD de la ficha. */
 export type GasStationSchemaInput = Pick<
   Station,
-  'id' | 'address' | 'postalCode' | 'city' | 'lat' | 'lon' | 'is24h' | 'openingHours' | 'prices'
+  'id' | 'name' | 'brandSlug' | 'address' | 'postalCode' | 'city' | 'lat' | 'lon' | 'is24h' | 'openingHours' | 'prices'
 >;
 
 interface OpeningHoursSpecification {
@@ -94,13 +95,20 @@ function buildFuelOffers(prices: GasStationSchemaInput['prices']) {
   });
 }
 
-/** Schema.org GasStation de la ficha. Sin marca: los datos franceses no traen el rótulo. */
+/** Schema.org Brand de la red de la estación, o nada si no pertenece a ninguna. */
+function buildBrandSchema(brandSlug: string | null) {
+  const group = findBrandGroupBySlug(brandSlug);
+  return group ? { brand: { '@type': 'Brand', name: group.name } } : {};
+}
+
+/** Schema.org GasStation de la ficha: nombre comercial y red si la fuente los trae. */
 export function getGasStationSchema(station: GasStationSchemaInput, url: string) {
   const openingHours = buildOpeningHoursSpecifications(station);
   return {
     '@context': 'https://schema.org',
     '@type': 'GasStation',
-    name: `Station-service ${station.address} - ${station.city}`,
+    name: station.name ?? `Station-service ${station.address} - ${station.city}`,
+    ...buildBrandSchema(station.brandSlug),
     identifier: station.id,
     address: {
       '@type': 'PostalAddress',

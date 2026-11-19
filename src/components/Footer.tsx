@@ -12,6 +12,10 @@ interface FooterProps {
 
 const FOOTER_LINK_CLASS = 'inline-flex items-center min-h-10 hover:text-[var(--orange-primary)] transition-colors';
 
+const URL_ENSEIGNES_DATASET = 'https://www.data.gouv.fr/datasets/referentiel-des-noms-et-enseignes-de-stations-service-enrichi-par-openstreetmap';
+const URL_ODBL = 'https://opendatacommons.org/licenses/odbl/1-0/';
+const EXTERNAL_LINK_CLASS = 'underline hover:text-[var(--orange-primary)]';
+
 const FOOTER_LINKS = [
   { href: '/', label: 'Accueil' },
   { href: '/historique', label: 'Historique des prix' },
@@ -37,6 +41,17 @@ export function Footer({ updatedAt }: FooterProps) {
           <p className="mt-1">
             Données : prix-carburants.gouv.fr (Ministère de l&apos;Économie), Licence Ouverte Etalab 2.0. {SITE_NAME} n&apos;est pas affilié au Ministère.
             {updatedAt && <span> Dernière mise à jour : <strong>{formatDateTimeParis(updatedAt)}</strong>.</span>}
+          </p>
+          <p className="mt-1">
+            Noms et enseignes des stations :{' '}
+            <a href={URL_ENSEIGNES_DATASET} target="_blank" rel="noopener noreferrer" className={EXTERNAL_LINK_CLASS}>
+              Chiffrex (chiffrex.fr)
+            </a>
+            , d&apos;après OpenStreetMap – © les contributeurs d&apos;OpenStreetMap,{' '}
+            <a href={URL_ODBL} target="_blank" rel="noopener noreferrer" className={EXTERNAL_LINK_CLASS}>
+              ODbL
+            </a>
+            .
           </p>
           <p className="mt-1">Les prix peuvent différer de ceux affichés à la pompe.</p>
         </div>

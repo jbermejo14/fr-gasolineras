@@ -7,6 +7,9 @@ import { SITE_NAME, absoluteUrl } from '@/lib/site';
 const PATH = '/mentions-legales';
 const URL_PRIX_CARBURANTS = 'https://www.prix-carburants.gouv.fr';
 const URL_CLOUDFLARE = 'https://www.cloudflare.com';
+const URL_ENSEIGNES_DATASET = 'https://www.data.gouv.fr/datasets/referentiel-des-noms-et-enseignes-de-stations-service-enrichi-par-openstreetmap';
+const URL_CHIFFREX = 'https://chiffrex.fr';
+const URL_ODBL = 'https://opendatacommons.org/licenses/odbl/1-0/';
 const URL_LICENCE_ETALAB = 'https://www.etalab.gouv.fr/licence-ouverte-open-licence/';
 
 export const metadata: Metadata = {
@@ -56,6 +59,21 @@ export default function MentionsLegalesPage() {
       </p>
       <p>
         {SITE_NAME} est un site indépendant : il n&apos;est pas affilié au ministère de l&apos;Économie et ne bénéficie d&apos;aucun soutien de sa part.
+      </p>
+
+      <h2>Noms et enseignes des stations</h2>
+      <p>
+        Noms et enseignes des stations : Chiffrex (
+        <a href={URL_CHIFFREX} target="_blank" rel="noopener noreferrer">chiffrex.fr</a>
+        ), d&apos;après OpenStreetMap – © les contributeurs d&apos;OpenStreetMap,{' '}
+        <a href={URL_ODBL} target="_blank" rel="noopener noreferrer">ODbL</a>. Jeu de données :{' '}
+        <a href={URL_ENSEIGNES_DATASET} target="_blank" rel="noopener noreferrer">Référentiel des noms et enseignes de stations-service (enrichi par OpenStreetMap)</a>, sur data.gouv.fr.
+      </p>
+      <p>
+        Le fichier <code>stations.json</code> publié par le site, qui reprend ces noms, constitue une base de données dérivée : il est publié sous licence ODbL 1.0.
+      </p>
+      <p>
+        Les noms et logos des enseignes appartiennent à leurs titulaires et ne servent qu&apos;à identifier les stations.
       </p>
 
       <h2>Exactitude des prix et responsabilité</h2>

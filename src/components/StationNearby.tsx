@@ -1,8 +1,10 @@
 import { MapPin } from 'lucide-react';
 import { InternalLink } from '@/components/InternalLink';
+import { StationBrandBadge } from '@/components/StationBrandBadge';
 import { FUEL_LABELS, type FuelType } from '@/lib/fuels';
 import { formatKm, formatPrice } from '@/lib/format';
 import { stationPath, type Station } from '@/lib/prixCarburants';
+import { stationCommercialTitle } from '@/lib/stationHeading';
 import { elideDe, type NearbyStation } from '@/lib/stationInsights';
 
 /** Carburantes que se muestran en cada estación cercana. */
@@ -15,16 +17,19 @@ interface StationNearbyItemProps {
 }
 
 function StationNearbyItem({ current, near, km }: StationNearbyItemProps) {
+  const commercialTitle = stationCommercialTitle(near);
   const pricedFuels = STATION_NEARBY_FUELS.filter((fuel) => near.prices[fuel] !== null);
   return (
     <li className="p-3.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border-color)] space-y-2 min-w-0">
+      <StationBrandBadge name={near.name} brandSlug={near.brandSlug} size="sm" />
       <InternalLink
         href={stationPath(near)}
         className="block text-sm font-bold text-[var(--text-main)] hover:text-[var(--orange-primary)] break-words"
       >
-        {near.address}
+        {commercialTitle ?? near.address}
         {near.communeSlug !== current.communeSlug && ` · ${near.city}`}
       </InternalLink>
+      {commercialTitle && <p className="text-xs text-[var(--text-muted)] break-words">{near.address}</p>}
       <p className="text-xs text-[var(--text-muted)]">à {formatKm(km)}</p>
       {pricedFuels.length > 0 && (
         <ul className="space-y-1 text-xs text-[var(--text-main)]">

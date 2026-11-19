@@ -9,6 +9,8 @@ const STATION_URL = 'https://ododex.com/fr/prix-carburants/station/56580001-breh
 function makeSchemaStation(overrides: Partial<GasStationSchemaInput> = {}): GasStationSchemaInput {
   return {
     id: '56580001',
+    name: null,
+    brandSlug: null,
     address: '16 Rue Chateaubriand',
     postalCode: '56580',
     city: 'Bréhan',
@@ -47,6 +49,15 @@ test('GasStation: dirección francesa, sin marca y con un precio por carburante 
     assert.equal(offer.priceSpecification.priceCurrency, 'EUR');
     assert.equal(offer.priceSpecification.unitCode, 'LTR');
   }
+});
+
+test('GasStation: nombre comercial y marca de la red cuando existen', () => {
+  const schema = getGasStationSchema(makeSchemaStation({ name: 'Carrefour Market', brandSlug: 'carrefour' }), STATION_URL);
+  assert.equal(schema.name, 'Carrefour Market');
+  assert.deepEqual((schema as { brand?: unknown }).brand, { '@type': 'Brand', name: 'Carrefour' });
+  const independent = getGasStationSchema(makeSchemaStation({ name: 'Garage Denis' }), STATION_URL);
+  assert.equal(independent.name, 'Garage Denis');
+  assert.equal('brand' in independent, false);
 });
 
 test('GasStation: sin horarios ni automate 24/24 no hay openingHoursSpecification', () => {

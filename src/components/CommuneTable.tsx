@@ -1,7 +1,9 @@
 import { InternalLink } from '@/components/InternalLink';
+import { StationBrandBadge } from '@/components/StationBrandBadge';
 import { FUEL_LABELS, FUEL_TYPES, type FuelType } from '@/lib/fuels';
 import { directionsUrl } from '@/lib/directions';
 import { stationPath, type Station } from '@/lib/prixCarburants';
+import { stationCommercialTitle } from '@/lib/stationHeading';
 import { formatPriceOrDash, stationCountLabel, elideA } from '@/lib/stationInsights';
 
 /** Carburante por el que llega ordenada la tabla. */
@@ -17,15 +19,22 @@ function priceColumnClass(fuel: FuelType): string {
 }
 
 function CommuneTableRow({ station, isCheapest }: { station: Station; isCheapest: boolean }) {
+  const commercialTitle = stationCommercialTitle(station);
   return (
     <tr className="hover:bg-[var(--bg-card-hover)] transition-colors">
       <td className={CELL}>
+        {station.name && (
+          <div className="mb-1">
+            <StationBrandBadge name={station.name} brandSlug={station.brandSlug} size="sm" />
+          </div>
+        )}
         <InternalLink
           href={stationPath(station)}
           className="font-bold text-[var(--text-main)] hover:text-[var(--orange-primary)] transition-colors block text-sm"
         >
-          {station.address}
+          {commercialTitle ?? station.address}
         </InternalLink>
+        {commercialTitle && <span className="block text-[11px] text-[var(--text-muted)]">{station.address}</span>}
         <span className="text-[11px] text-[var(--text-dim)]">{station.postalCode}</span>
         {station.roadType === 'autoroute' && (
           <span className="ml-1.5 px-1.5 py-0.5 rounded border border-[var(--border-color)] text-[var(--text-muted)] text-[9px] font-extrabold uppercase">
@@ -88,7 +97,7 @@ export function CommuneTable({ city, stations }: CommuneTableProps) {
             Tableau comparatif des stations-service {elideA(city)}
           </h2>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            Classées par prix du gazole, du moins cher au plus cher. Cliquez sur l&apos;adresse d&apos;une station pour
+            Classées par prix du gazole, du moins cher au plus cher. Cliquez sur une station pour
             ouvrir sa fiche complète.
           </p>
         </div>

@@ -1,8 +1,11 @@
 import { ArrowLeft, MapPin, Navigation } from 'lucide-react';
 import { InternalLink } from '@/components/InternalLink';
+import { StationBrandBadge } from '@/components/StationBrandBadge';
+import { findBrandGroupBySlug } from '@/lib/brands';
 import { directionsUrl } from '@/lib/directions';
 import type { RoadType, Station } from '@/lib/prixCarburants';
-import { elideDe, elideA } from '@/lib/stationInsights';
+import { stationHeading } from '@/lib/stationHeading';
+import { elideDe } from '@/lib/stationInsights';
 
 const ROAD_TYPE_LABELS: Record<RoadType, string> = {
   route: 'Sur route',
@@ -19,11 +22,13 @@ interface StationHeroProps {
 
 /** Cabecera de la ficha: título, resumen, dirección y accesos al itinerario y al municipio. */
 export function StationHero({ station, summary }: StationHeroProps) {
+  const brand = findBrandGroupBySlug(station.brandSlug);
   return (
     <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] p-4 md:p-8 shadow-md">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
         <div className="space-y-3 min-w-0">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <StationBrandBadge name={station.name} brandSlug={station.brandSlug} size="md" />
             <span className="px-3 py-1.5 rounded bg-[var(--bg-input)] border border-[var(--orange-border)] text-[var(--orange-primary)] text-sm font-extrabold uppercase tracking-tight">
               {ROAD_TYPE_LABELS[station.roadType]}
             </span>
@@ -32,7 +37,7 @@ export function StationHero({ station, summary }: StationHeroProps) {
           </div>
 
           <h1 className="text-xl md:text-3xl font-extrabold text-[var(--text-main)] break-words">
-            Station-service {station.address} {elideA(station.city)}
+            {stationHeading(station)}
           </h1>
 
           <p className="text-sm text-[var(--text-main)]">{summary}</p>
@@ -46,6 +51,14 @@ export function StationHero({ station, summary }: StationHeroProps) {
         </div>
 
         <div className="flex flex-col gap-3 md:min-w-[200px]">
+          {brand && (
+            <InternalLink
+              href={`/marque/${brand.slug}`}
+              className="flex items-center justify-center min-h-11 px-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border-color)] hover:border-[var(--orange-primary)] text-xs font-bold text-[var(--text-main)] transition-colors"
+            >
+              Toutes les stations {brand.name}
+            </InternalLink>
+          )}
           <a
             href={directionsUrl(station.lat, station.lon)}
             target="_blank"

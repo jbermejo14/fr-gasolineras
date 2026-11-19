@@ -11,7 +11,8 @@ import {
 import { formatPrice } from '@/lib/format';
 import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import { getBreadcrumbSchema, getGasStationSchema } from '@/lib/seo';
-import { nearbyStations, savingsReferences, stationSummary, elideA } from '@/lib/stationInsights';
+import { nearbyStations, savingsReferences, stationSummary } from '@/lib/stationInsights';
+import { stationHeading } from '@/lib/stationHeading';
 import { toLightStation } from '@/lib/stationPayload';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -65,7 +66,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!station) return NOT_FOUND_METADATA;
 
   const canonical = absoluteUrl(stationPath(station));
-  const title = `Station-service ${station.address} ${elideA(station.city)} : prix des carburants aujourd'hui`;
+  const title = `${stationHeading(station)} : prix des carburants aujourd'hui`;
   const description = stationMetaDescription(station);
 
   return {

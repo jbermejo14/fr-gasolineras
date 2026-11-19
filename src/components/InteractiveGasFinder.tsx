@@ -9,9 +9,11 @@ import { GasFinderStatsStrip } from '@/components/GasFinderStats';
 import { GasFinderEmpty, GasFinderError, GasFinderList, GasFinderLoading } from '@/components/GasFinderResults';
 import { useGasFinderStations } from '@/components/GasFinderLoader';
 import {
+  GAS_FINDER_ALL_BRANDS,
   GAS_FINDER_ALL_DEPARTMENTS,
   GAS_FINDER_PAGE_SIZE,
   type GasFinderSort,
+  gasFinderBrandOptions,
   gasFinderComputeStats,
   gasFinderFilterStations,
   gasFinderSortStations,
@@ -66,6 +68,7 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
 
   const [fuel, setFuel] = useState<FuelType>(DEFAULT_FUEL);
   const [department, setDepartment] = useState<string>(GAS_FINDER_ALL_DEPARTMENTS);
+  const [brand, setBrand] = useState<string>(GAS_FINDER_ALL_BRANDS);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<GasFinderSort>(DEFAULT_SORT);
   const [view, setView] = useState<GasFinderView>('list');
@@ -77,6 +80,7 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
   const { userCoords } = geolocation;
 
   const stations = state.status === 'ready' ? state.stations : null;
+  const brands = useMemo(() => (stations ? gasFinderBrandOptions(stations) : []), [stations]);
 
   // El filtrado usa la búsqueda diferida para no recalcular ni reencuadrar el mapa en cada pulsación.
   const deferredSearch = useDeferredValue(search);
@@ -85,9 +89,9 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
   const filteredStations = useMemo(
     () =>
       stations
-        ? gasFinderFilterStations(stations, { fuel, department, search: deferredSearch, userCoords, radius })
+        ? gasFinderFilterStations(stations, { fuel, department, brand, search: deferredSearch, userCoords, radius })
         : [],
-    [stations, fuel, department, deferredSearch, userCoords, radius]
+    [stations, fuel, department, brand, deferredSearch, userCoords, radius]
   );
 
   const sortedStations = useMemo(
@@ -107,6 +111,7 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
   const handleResetFilters = () => {
     setSearch('');
     setDepartment(GAS_FINDER_ALL_DEPARTMENTS);
+    setBrand(GAS_FINDER_ALL_BRANDS);
     geolocation.clear();
     resetSortIfByDistance();
   };
@@ -135,6 +140,8 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
         search={search}
         department={department}
         departments={departments}
+        brand={brand}
+        brands={brands}
         sortBy={sortBy}
         hasLocation={userCoords !== null}
         geoLoading={geolocation.geoLoading}
@@ -142,6 +149,7 @@ export function InteractiveGasFinder({ departments }: InteractiveGasFinderProps)
         view={view}
         onSearchChange={setSearch}
         onDepartmentChange={setDepartment}
+        onBrandChange={setBrand}
         onSortChange={setSortBy}
         onToggleGeo={geolocation.toggle}
         onRadiusChange={setRadius}

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
+import type { BrandGroup } from '@/lib/brands';
 import { Search, MapPin, List, Map as MapIcon, X } from 'lucide-react';
-import { GAS_FINDER_ALL_DEPARTMENTS, type GasFinderSort } from '@/components/GasFinderLogic';
+import { GAS_FINDER_ALL_BRANDS, GAS_FINDER_ALL_DEPARTMENTS, type GasFinderSort } from '@/components/GasFinderLogic';
 
 const RADIUS_OPTIONS_KM = [5, 15, 30, 50];
 // text-base en móvil evita el zoom automático de iOS; md:text-xs mantiene el diseño de escritorio.
@@ -19,6 +20,9 @@ interface GasFinderFiltersProps {
   search: string;
   department: string;
   departments: GasFinderDepartmentOption[];
+  brand: string;
+  /** Redes presentes en los datos cargados. */
+  brands: readonly BrandGroup[];
   sortBy: GasFinderSort;
   hasLocation: boolean;
   geoLoading: boolean;
@@ -26,6 +30,7 @@ interface GasFinderFiltersProps {
   view: GasFinderView;
   onSearchChange: (value: string) => void;
   onDepartmentChange: (value: string) => void;
+  onBrandChange: (value: string) => void;
   onSortChange: (value: GasFinderSort) => void;
   onToggleGeo: () => void;
   onRadiusChange: (value: number) => void;
@@ -56,7 +61,7 @@ function GasFinderViewToggle({ view, onViewChange }: Pick<GasFinderFiltersProps,
 
 function GasFinderSearchField({ search, onSearchChange }: Pick<GasFinderFiltersProps, 'search' | 'onSearchChange'>) {
   return (
-    <div className="relative md:col-span-2">
+    <div className="relative md:col-span-3">
       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-dim)] pointer-events-none" />
       <input
         type="text"
@@ -101,12 +106,12 @@ function GasFinderRadiusPicker({ radius, onRadiusChange }: Pick<GasFinderFilters
 }
 
 export function GasFinderFilters(props: GasFinderFiltersProps) {
-  const { search, department, departments, sortBy, hasLocation, geoLoading, radius, view } = props;
+  const { search, department, departments, brand, brands, sortBy, hasLocation, geoLoading, radius, view } = props;
   const geoLabel = hasLocation ? '📍 Position active' : geoLoading ? 'Localisation…' : 'Autour de moi';
 
   return (
     <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 shadow-sm space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <GasFinderSearchField search={search} onSearchChange={props.onSearchChange} />
 
         <select
@@ -119,6 +124,20 @@ export function GasFinderFilters(props: GasFinderFiltersProps) {
           {departments.map((item) => (
             <option key={item.slug} value={item.slug}>
               {item.code} – {item.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={brand}
+          onChange={(e) => props.onBrandChange(e.target.value)}
+          aria-label="Enseigne"
+          className={FIELD}
+        >
+          <option value={GAS_FINDER_ALL_BRANDS}>Toutes les enseignes</option>
+          {brands.map((group) => (
+            <option key={group.slug} value={group.slug}>
+              {group.name}
             </option>
           ))}
         </select>

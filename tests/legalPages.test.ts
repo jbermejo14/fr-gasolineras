@@ -47,6 +47,22 @@ test('el marcador de campos vacíos está en francés y sin SIREN', () => {
   }
 });
 
+const ODBL_URL = 'opendatacommons.org/licenses/odbl/1-0/';
+
+test('atribución ODbL en las mentions légales y en el pie', () => {
+  const mentions = readSource('app', 'mentions-legales', 'page.tsx').replace(/\s+/g, ' ');
+  assert.ok(mentions.includes('Noms et enseignes des stations : Chiffrex ( <a href={URL_CHIFFREX} target="_blank" rel="noopener noreferrer">chiffrex.fr</a> ), d&apos;après OpenStreetMap – © les contributeurs d&apos;OpenStreetMap,'));
+  assert.ok(mentions.includes('>ODbL</a>'));
+  assert.ok(mentions.includes(ODBL_URL));
+  assert.match(mentions, /<code>stations\.json<\/code> publié par le site.*ODbL/);
+  assert.ok(mentions.includes('Les noms et logos des enseignes appartiennent à leurs titulaires et ne servent qu&apos;à identifier les stations.'));
+  const footer = readSource('components', 'Footer.tsx');
+  assert.ok(footer.includes('Noms et enseignes des stations :'));
+  assert.ok(footer.includes("d&apos;après OpenStreetMap – © les contributeurs d&apos;OpenStreetMap,"));
+  assert.ok(footer.includes(ODBL_URL));
+  assert.ok(footer.includes('data.gouv.fr/datasets/referentiel-des-noms-et-enseignes'));
+});
+
 test('la fecha de revisión sale en francés', () => {
   assert.equal(FECHA_TEXTOS_LEGALES, '2026-11-17');
   assert.equal(legalReviewDate(), '17 novembre 2026');

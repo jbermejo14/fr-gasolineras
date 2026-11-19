@@ -1,10 +1,13 @@
 import type { FuelType } from '../lib/fuels.ts';
+import { BRAND_GROUPS, type BrandGroup } from '../lib/brands.ts';
 import type { LightStation } from '../lib/stationPayload.ts';
 
 /** Número de tarjetas que se añaden cada vez que se pulsa « Charger plus ». */
 export const GAS_FINDER_PAGE_SIZE = 36;
 /** Valor del filtro de departamento que no filtra nada. */
 export const GAS_FINDER_ALL_DEPARTMENTS = 'TOUS';
+/** Valor del filtro de enseña que no filtra nada. */
+export const GAS_FINDER_ALL_BRANDS = 'TOUS';
 /** Litros de un depósito típico para calcular el ahorro. */
 export const GAS_FINDER_TANK_LITERS = 50;
 
@@ -27,6 +30,8 @@ export interface GasFinderCriteria {
   fuel: FuelType;
   /** Slug del departamento o GAS_FINDER_ALL_DEPARTMENTS. */
   department: string;
+  /** Slug de la red o GAS_FINDER_ALL_BRANDS. */
+  brand: string;
   search: string;
   sortBy: GasFinderSort;
   userCoords: { lat: number; lon: number } | null;
@@ -70,6 +75,7 @@ function gasFinderMatchesSearch(station: LightStation, query: string): boolean {
   return (
     gasFinderNormalizeText(station.address).includes(query) ||
     gasFinderNormalizeText(station.city).includes(query) ||
+    (station.name !== null && gasFinderNormalizeText(station.name).includes(query)) ||
     station.postalCode.includes(query)
   );
 }
@@ -99,10 +105,11 @@ export function gasFinderFilterStations(
   stations: LightStation[],
   criteria: GasFinderFilterCriteria
 ): GasFinderStation[] {
-  const { fuel, department, search, userCoords, radius } = criteria;
+  const { fuel, department, brand, search, userCoords, radius } = criteria;
   let list: GasFinderStation[] = stations.filter((s) => (s.prices[fuel] ?? 0) > 0);
 
   if (department !== GAS_FINDER_ALL_DEPARTMENTS) list = list.filter((s) => s.departmentSlug === department);
+  if (brand !== GAS_FINDER_ALL_BRANDS) list = list.filter((s) => s.brandSlug === brand);
 
   const query = gasFinderNormalizeText(search);
   if (query) list = list.filter((s) => gasFinderMatchesSearch(s, query));
@@ -114,6 +121,12 @@ export function gasFinderFilterStations(
   }
 
   return list;
+}
+
+/** Redes de BRAND_GROUPS con alguna estación en los datos, en el orden de la tabla. */
+export function gasFinderBrandOptions(stations: readonly LightStation[]): BrandGroup[] {
+  const present = new Set(stations.map((station) => station.brandSlug));
+  return BRAND_GROUPS.filter((group) => present.has(group.slug));
 }
 
 /** Devuelve una copia ordenada según `sortBy`; no modifica la entrada. */
