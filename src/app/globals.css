@@ -1,0 +1,339 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Los valores replican la paleta de calculadora-impuestos (Ododex), con contraste WCAG AA.
+   Los botones sólidos usan --on-accent-* porque texto blanco sobre #ff6b00 no llega a 4,5:1. */
+@theme {
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  /* Evita que Safari iOS agrande el texto al girar el móvil a horizontal. */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  :root,
+  [data-theme="dark"],
+  .dark {
+    --bg-main: #0a0a0a;
+    --bg-header: #141414;
+    --bg-card: #141414;
+    --bg-card-hover: #1c1c1c;
+    --bg-input: #1c1c1c;
+    --bg-badge: #1c1c1c;
+    --bg-pricing-box: #1c1c1c;
+    --bg-logo-pill: #ffffff;
+
+    --orange-primary: #ff6b00;
+    --orange-hover: #ff8533;
+    --orange-light: #ff8533;
+    --orange-dark: #c2410c;
+    --orange-glow: rgba(255, 107, 0, 0.3);
+    --orange-subtle: #2a1708;
+    --orange-border: rgba(255, 107, 0, 0.4);
+
+    --on-accent-bg: #c2410c;
+    --on-accent-hover: #9a3412;
+    --on-accent-text: #ffffff;
+    --map-accent: #ff6b00;
+
+    --text-main: #f5f5f5;
+    --text-muted: #a3a3a3;
+    --text-dim: #a3a3a3;
+
+    --border-color: #2a2a2a;
+    --border-subtle: #1c1c1c;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 14px;
+  }
+
+  [data-theme="light"],
+  .light {
+    --bg-main: #ffffff;
+    --bg-header: #fafafa;
+    --bg-card: #fafafa;
+    --bg-card-hover: #f4f4f5;
+    --bg-input: #ffffff;
+    --bg-badge: #f4f4f5;
+    --bg-pricing-box: #f4f4f5;
+    --bg-logo-pill: #ffffff;
+
+    --orange-primary: #c2410c;
+    --orange-hover: #9a3412;
+    --orange-light: #ea580c;
+    --orange-dark: #9a3412;
+    --orange-glow: rgba(194, 65, 12, 0.25);
+    --orange-subtle: #fff7ed;
+    --orange-border: #fdba74;
+
+    --text-main: #111111;
+    --text-muted: #525252;
+    --text-dim: #525252;
+
+    --border-color: #e4e4e7;
+    --border-subtle: #f4f4f5;
+  }
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Leaflet Container Overrides */
+.leaflet-container {
+  font-family: inherit !important;
+  background-color: #111111 !important;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.custom-station-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  max-width: 112px;
+  box-sizing: border-box;
+  background-color: #000;
+  border: 2px solid var(--map-accent);
+  border-radius: 6px;
+  padding: 3px 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  transition: transform 0.2s ease;
+}
+
+.custom-station-pin__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.custom-station-pin__logo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  background-color: #fff;
+  border-radius: 3px;
+  padding: 1px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.custom-station-pin__name {
+  min-width: 0;
+  color: #f5f6f8;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-station-pin__price {
+  font-family: monospace;
+  color: var(--map-accent);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.custom-station-pin--highlight {
+  border-color: #fff;
+  transform: scale(1.1);
+  z-index: 900;
+}
+
+.custom-station-pin:hover {
+  transform: scale(1.15);
+  background-color: var(--map-accent);
+  z-index: 1000 !important;
+}
+
+.custom-station-pin:hover .custom-station-pin__name,
+.custom-station-pin:hover .custom-station-pin__price {
+  color: #000;
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--orange-primary) !important;
+  border-radius: 10px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--orange-primary) !important;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px var(--orange-primary); }
+  50% { opacity: 0.5; transform: scale(0.9); box-shadow: 0 0 2px var(--orange-primary); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+/* Utilidad: oculta la barra de desplazamiento de filas desplazables en horizontal */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Burbujas de grupos de estaciones en el mapa.
+   Selector con dos clases: leaflet.css se carga después y su `.leaflet-marker-icon { display: block }`
+   anularía el flex con un selector de una sola clase. */
+.leaflet-marker-icon.station-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--on-accent-bg);
+  border: 2px solid var(--map-accent);
+  color: #fff;
+  line-height: 1.1;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.station-cluster__count {
+  font-weight: 800;
+}
+
+.station-cluster__price {
+  font-family: monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* En la burbuja pequeña (34 px) no cabe la línea de precio */
+.station-cluster--small .station-cluster__price {
+  display: none;
+}
+
+.station-cluster--small .station-cluster__count { font-size: 0.8rem; }
+.station-cluster--medium .station-cluster__count { font-size: 0.95rem; }
+.station-cluster--large .station-cluster__count { font-size: 1.1rem; }
+
+.station-cluster:hover {
+  background-color: var(--on-accent-hover);
+}
+
+/* Popup de estación */
+.station-popup {
+  padding: 12px;
+  min-width: 220px;
+  font-family: inherit;
+}
+
+.station-popup__name {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.station-popup__address {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.station-popup__price {
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--orange-primary);
+  margin-bottom: 8px;
+}
+
+.station-popup__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.station-popup__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  text-align: center;
+}
+
+.station-popup__link--primary {
+  background-color: var(--on-accent-bg);
+  color: var(--on-accent-text);
+  font-weight: 700;
+}
+
+.station-popup__link--secondary {
+  background-color: var(--border-color);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+@media (max-width: 639px) {
+  .leaflet-popup-content {
+    max-width: 280px;
+  }
+}
+
+/* Hueco de anuncio manual (AdSlot). Va en @layer components para que las utilidades de Tailwind puedan ajustarlo. */
+@layer components {
+  .ad-slot {
+    width: 100%;
+    max-width: 100%;
+    min-height: 280px;
+    overflow: hidden;
+    padding: 8px 16px 16px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+  }
+
+  .ad-slot__label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 768px) {
+    .ad-slot {
+      min-height: 250px;
+    }
+  }
+}

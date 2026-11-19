@@ -1,0 +1,35 @@
+{
+  "name": "prix-carburants-fr",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run preparar-datos && next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --no-warnings --test tests/*.test.ts",
+    "historique": "node --experimental-strip-types --no-warnings scripts/historique.ts",
+    "preparar-datos": "node --experimental-strip-types --no-warnings scripts/preparar-datos.ts"
+  },
+  "dependencies": {
+    "@types/leaflet": "^1.9.22",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.73.0",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-wasm32-wasi": "4.3.3"
+  }
+}
