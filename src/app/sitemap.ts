@@ -9,6 +9,7 @@ export const dynamic = 'force-static';
 
 const SITEMAP_HOME_PRIORITY = 1.0;
 const SITEMAP_DEPARTMENT_PRIORITY = 0.9;
+const SITEMAP_BRAND_PRIORITY = 0.8;
 const SITEMAP_COMMUNE_PRIORITY = 0.8;
 const SITEMAP_STATION_PRIORITY = 0.6;
 const SITEMAP_LEGAL_PRIORITY = 0.2;
@@ -27,6 +28,18 @@ function historiqueSitemapEntries(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly',
     priority: area.kind === 'france' ? SITEMAP_HISTORIQUE_FRANCE_PRIORITY : SITEMAP_HISTORIQUE_AREA_PRIORITY,
   }));
+}
+
+/** Índice de marcas y una página por red con estaciones. */
+function brandSitemapEntries(brandSlugs: readonly string[], lastModified: Date): MetadataRoute.Sitemap {
+  const index: MetadataRoute.Sitemap[number] = {
+    url: absoluteUrl('/marque'),
+    lastModified,
+    changeFrequency: 'daily',
+    priority: SITEMAP_BRAND_PRIORITY,
+  };
+  const brands = brandSlugs.map((slug) => ({ ...index, url: absoluteUrl(`/marque/${slug}`) }));
+  return [index, ...brands];
 }
 
 function legalSitemapEntries(lastModified: Date): MetadataRoute.Sitemap {
@@ -54,6 +67,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: SITEMAP_DEPARTMENT_PRIORITY,
     });
   }
+
+  entries.push(...brandSitemapEntries(Array.from(data.brands.keys()), lastModified));
 
   for (const commune of data.communes.values()) {
     entries.push({

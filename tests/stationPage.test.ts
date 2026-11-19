@@ -52,7 +52,7 @@ test('stationCommercialTitle: nombre salvo que el logo ya diga lo mismo', () => 
   assert.equal(stationCommercialTitle({ name: 'Carrefour Market', brandSlug: 'carrefour' }), 'Carrefour Market');
   assert.equal(stationCommercialTitle({ name: 'Garage Denis', brandSlug: null }), 'Garage Denis');
   // Red sin logo: el nombre se mantiene como título.
-  assert.equal(stationCommercialTitle({ name: 'Dyneff', brandSlug: 'dyneff' }), 'Dyneff');
+  assert.equal(stationCommercialTitle({ name: 'Aire C', brandSlug: 'aire-c' }), 'Aire C');
 });
 
 test('brandBadgeSpec: logo, texto de la red, texto del nombre o nada', () => {
@@ -62,7 +62,7 @@ test('brandBadgeSpec: logo, texto de la red, texto del nombre o nada', () => {
     src: assetPath('/logos/carrefour.webp'),
     alt: 'Carrefour',
   });
-  assert.deepEqual(brandBadgeSpec('Dyneff Express', 'dyneff'), { kind: 'text', label: 'Dyneff' });
+  assert.deepEqual(brandBadgeSpec('Aire C Express', 'aire-c'), { kind: 'text', label: 'Aire C' });
   assert.deepEqual(brandBadgeSpec('Garage Denis', null), { kind: 'text', label: 'Garage Denis' });
 });
 

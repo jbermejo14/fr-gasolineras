@@ -7,6 +7,8 @@ import { formatEuros, formatInteger, formatPrice } from '@/lib/format';
 import { absoluteUrl } from '@/lib/site';
 import { AdSlot } from '@/components/AdSlot';
 import { InteractiveGasFinder } from '@/components/InteractiveGasFinder';
+import { BrandHomeBlock } from '@/components/BrandHomeBlock';
+import { summarizeBrands } from '@/lib/brandInsights';
 import { gasFinderTankSavings, GAS_FINDER_TANK_LITERS } from '@/components/GasFinderLogic';
 import { getBreadcrumbSchema } from '@/lib/seo';
 import { TrendingDown, Fuel, ShieldCheck } from 'lucide-react';
@@ -212,6 +214,8 @@ export default async function HomePage() {
         <AdSlot />
 
         <HomeDepartmentDirectory departments={departments} />
+
+        <BrandHomeBlock summaries={summarizeBrands(data.brands)} />
 
         <HomeSeoText />
 

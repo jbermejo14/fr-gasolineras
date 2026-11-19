@@ -33,7 +33,8 @@ export function StationBrandBadge({ name, brandSlug, size }: StationBrandBadgePr
         height={LOGO_HEIGHT_PX[size]}
         width={LOGO_MAX_WIDTH_PX}
         style={{ height: LOGO_HEIGHT_PX[size], maxWidth: LOGO_MAX_WIDTH_PX }}
-        className="w-auto object-contain shrink-0"
+        // Fondo blanco: varios logos tienen letras negras que no se leen en el tema oscuro.
+        className="w-auto object-contain shrink-0 rounded bg-white px-1 py-0.5"
       />
     );
   }
