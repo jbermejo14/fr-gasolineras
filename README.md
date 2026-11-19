@@ -12,7 +12,8 @@ Es un port de la web española `../gasolineras` (`/es/gasolineras`). El diseño 
 | `/departement/[departement]` | Las estaciones más baratas, medias frente a Francia y directorio de municipios |
 | `/departement/[departement]/[commune]` | Tabla de precios del municipio, mapa y municipios cercanos (solo HTML) |
 | `/station/[id]-[slug]` | Ficha: precios con fecha, ahorro en un depósito de 50 L, horario, servicios, cercanas, histórico y mapa (solo HTML) |
-| `/historique`, `/historique/region/[region]`, `/historique/departement/[departement]` | Evolución semanal de gazole, SP95-E10, SP95 y SP98 desde el 4 de enero de 2016 |
+| `/marque`, `/marque/[marque]` | Precios de hoy por red (TotalEnergies, Intermarché, Carrefour… 19 redes) |
+| `/historique`, `/historique/region/[region]`, `/historique/departement/[departement]`, `/historique/marque/[marque]` | Evolución semanal de gazole, SP95-E10, SP95 y SP98 desde el 4 de enero de 2016 |
 | `/mentions-legales`, `/confidentialite`, `/cookies` | Textos legales |
 
 Unas 15 500 páginas y 1 056 ficheros de histórico por estación.
@@ -21,7 +22,8 @@ Unas 15 500 páginas y 1 056 ficheros de histórico por estación.
 
 - **Precios de hoy:** flujo instantáneo de `data.economie.gouv.fr` (`prix-des-carburants-en-france-flux-instantane-v2`), Licence Ouverte Etalab 2.0. Lo descarga `npm run preparar-datos` en cada compilación.
 - **Histórico:** ficheros anuales de `donnees.roulez-eco.fr/opendata/annee/{año}` (zip con un XML por año). Los procesa `npm run historique`.
-- Los datos franceses no incluyen la marca de la estación: la web la nombra por su dirección y municipio.
+- **Nombres y marcas:** referencial de Chiffrex en data.gouv.fr (a partir de OpenStreetMap, licencia ODbL, actualizado cada domingo). Lo descarga `preparar-datos` a `data/cache/enseignes.csv`; si falla, se usa la copia anterior. Cubre el 98 % de las estaciones. La atribución ODbL es obligatoria (pie y mentions légales) y `public/datos/stations.json` se publica bajo ODbL.
+- **Logos:** `public/logos/`, 16 de las 19 redes (Wikimedia Commons, dominio público; Carrefour, BP y Shell copiados de la web española). Système U, Aire C y DATS 24 salen con distintivo de texto. Para añadir uno: fichero en `public/logos/` y su ruta en `src/lib/brands.ts`.
 
 ## Instalación
 
@@ -93,8 +95,8 @@ Tailwind se compila con `postcss-tailwind-windows.cjs`, que recorre `src/` una s
 
 ## Límites conocidos
 
-- Sin marcas ni logos (no vienen en los datos).
+- Las marcas vienen de OpenStreetMap: puede haber errores puntuales. El histórico por marca usa la marca actual de cada estación para todo el periodo.
 - Solo Francia metropolitana y Córcega.
 - Las primeras semanas de 2016 no tienen dato para las estaciones que no cambiaron de precio desde finales de 2015.
 - Las estaciones sin municipio en el flujo (unas 4) no se publican.
-- Unos 17 500 ficheros por despliegue, con un límite de 20 000 por Worker en el plan gratuito.
+- Unos 17 850 ficheros por despliegue, con un límite de 20 000 por Worker en el plan gratuito.
