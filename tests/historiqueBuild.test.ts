@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { YearAccumulator, mergeYearResults, weeklyStationSeries } from '../src/lib/historiqueBuild.ts';
+import { YearAccumulator, computeBrandsSignature, mergeYearResults, weeklyStationSeries } from '../src/lib/historiqueBuild.ts';
 import type { CarryState, YearResult } from '../src/lib/historiqueBuild.ts';
 import type { AnnualStation, PriceRecord } from '../src/lib/annualArchive.ts';
 import { BRAND_GROUPS } from '../src/lib/brands.ts';
@@ -140,7 +140,7 @@ test('YearAccumulator: carryIn de otro año y carryOut en el resultado', () => {
 });
 
 function yearResult(year: number, weeks: string[], areas: YearResult['areas']): YearResult {
-  return { version: 2, year, weeks, zipSize: 0, zipMtimeMs: 0, areas, carryOut: {}, partitionFiles: [] };
+  return { version: 2, year, weeks, zipSize: 0, zipMtimeMs: 0, brandsSignature: '', areas, carryOut: {}, partitionFiles: [] };
 }
 
 function fuelTotals(sum: number[], count: number[], min: (number | null)[]) {
@@ -230,4 +230,13 @@ test('mergeYearResults sin resultados no produce zonas', () => {
   const { index, areas } = mergeYearResults([], 'x');
   assert.deepEqual(areas, []);
   assert.deepEqual(index.areas, []);
+});
+
+test('computeBrandsSignature: estable ante el orden y distinta si cambia una pareja', () => {
+  const a = computeBrandsSignature(new Map([['1', 'leclerc'], ['2', 'bp']]));
+  const reordered = computeBrandsSignature(new Map([['2', 'bp'], ['1', 'leclerc']]));
+  const changed = computeBrandsSignature(new Map([['1', 'leclerc'], ['2', 'shell']]));
+  assert.equal(a, reordered);
+  assert.notEqual(a, changed);
+  assert.notEqual(a, computeBrandsSignature(new Map()));
 });

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { AnnualStation, PriceRecord } from './annualArchive.ts';
 import { BRAND_GROUPS } from './brands.ts';
 import { DEPARTMENTS, REGIONS, departmentCodeFromPostalCode, findDepartmentByCode, findRegionByCode } from './geo.ts';
@@ -20,8 +21,13 @@ export type CarryState = Partial<Record<HistoryFuel, { maj: string; priceMilli: 
 export const HISTORY_STALE_DAYS = 30;
 
 const HISTORIQUE_BUILD_FORMAT_VERSION = 1;
-/** Versión 2 de YearResult: añade las zonas de marca; invalida la caché de la versión 1. */
-const HISTORIQUE_BUILD_YEAR_RESULT_VERSION = 2;
+/** Versión de YearResult (2: añade zonas de marca y brandsSignature); un cambio invalida la caché por año. */
+export const HISTORY_YEAR_RESULT_VERSION = 2;
+const HISTORIQUE_BUILD_SIGNATURE_ALGORITHM = 'sha1';
+const HISTORIQUE_BUILD_SIGNATURE_ENCODING = 'hex';
+
+/** Devuelve el slug de la red de una estación, o null si no tiene. */
+export type BrandOfStation = (id: string) => string | null;
 const HISTORIQUE_BUILD_END_OF_DAY = 'T23:59:59';
 const HISTORIQUE_BUILD_DATE_LENGTH = 10;
 const HISTORIQUE_BUILD_MILLIS_PER_DAY = 86_400_000;
@@ -96,15 +102,29 @@ export function weeklyStationSeries(
   return { series, carryOut };
 }
 
+/**
+ * Huella de lo que determina las zonas de marca: la tabla BRAND_GROUPS (slug y keywords) y las parejas
+ * estación → slug de red, ordenadas. Si cambia, la caché de los años ya calculados deja de valer.
+ */
+export function computeBrandsSignature(brandByStation: ReadonlyMap<string, string>): string {
+  const groups = BRAND_GROUPS.map((brand) => [brand.slug, brand.keywords]);
+  const pairs = [...brandByStation.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return createHash(HISTORIQUE_BUILD_SIGNATURE_ALGORITHM)
+    .update(JSON.stringify([groups, pairs]))
+    .digest(HISTORIQUE_BUILD_SIGNATURE_ENCODING);
+}
+
 /** Resultado de un año, cacheado en data/historique/annees/{year}.json.gz. */
 export interface YearResult {
-  version: 2;
+  version: typeof HISTORY_YEAR_RESULT_VERSION;
   year: number;
   /** Lunes de ese año (recortados por --hasta en el año final). */
   weeks: string[];
   /** Tamaño del zip con el que se calculó. */
   zipSize: number;
   zipMtimeMs: number;
+  /** Huella de las redes y de la red de cada estación con la que se calculó (ver computeBrandsSignature). */
+  brandsSignature: string;
   /** Clave `${kind}:${slug}`. */
   areas: Record<string, Record<HistoryFuel, { sum: number[]; count: number[]; min: (PriceMilli | null)[] }>>;
   /** Estación → estado al final del año. */
@@ -137,7 +157,7 @@ function historiqueBuildEncodeStation(series: HistoriqueBuildFuelSeries): Statio
   return encoded;
 }
 
-/** Procesa un año entero. Área de cada estación: 'france' siempre; departamento por departmentCodeFromPostalCode(cp) y su región. Desconocido → solo France. */
+/** Procesa un año entero. Área de cada estación: 'france' siempre; departamento por departmentCodeFromPostalCode(cp) y su región; red si brandOfStation la da. Desconocido → solo France (y red). */
 export class YearAccumulator {
   private readonly year: number;
   private readonly weeks: string[];
@@ -146,14 +166,14 @@ export class YearAccumulator {
   private readonly carryOut: Record<string, CarryState> = {};
   private readonly stationsByDepartment = new Map<string, StationPartitionFile['stations']>();
 
-  private readonly brandOfStation: (id: string) => string | null;
+  private readonly brandOfStation: BrandOfStation;
 
   /** `brandOfStation` devuelve el slug de la red de una estación (o null); sin él no hay zonas de marca. */
   constructor(
     year: number,
     weeks: readonly string[],
     carryIn: Readonly<Record<string, CarryState>>,
-    brandOfStation: (id: string) => string | null = () => null
+    brandOfStation: BrandOfStation = () => null
   ) {
     this.year = year;
     this.weeks = [...weeks];
@@ -169,8 +189,8 @@ export class YearAccumulator {
     if (departmentCode) this.addToPartition(departmentCode, station.id, series);
   }
 
-  /** Particiones por departamento (estaciones con algún valor no nulo ese año; series en delta) y el YearResult sin zipSize/zipMtimeMs/partitionFiles. */
-  build(): { partitions: StationPartitionFile[]; result: Omit<YearResult, 'zipSize' | 'zipMtimeMs' | 'partitionFiles'> } {
+  /** Particiones por departamento (estaciones con algún valor no nulo ese año; series en delta) y el YearResult sin zipSize/zipMtimeMs/brandsSignature/partitionFiles. */
+  build(): { partitions: StationPartitionFile[]; result: Omit<YearResult, 'zipSize' | 'zipMtimeMs' | 'brandsSignature' | 'partitionFiles'> } {
     const partitions = [...this.stationsByDepartment.keys()].sort().map((departmentCode) => ({
       version: HISTORIQUE_BUILD_FORMAT_VERSION as 1,
       departmentCode,
@@ -183,7 +203,7 @@ export class YearAccumulator {
     return {
       partitions,
       result: {
-        version: HISTORIQUE_BUILD_YEAR_RESULT_VERSION,
+        version: HISTORY_YEAR_RESULT_VERSION,
         year: this.year,
         weeks: [...this.weeks],
         areas,
@@ -290,7 +310,7 @@ function historiqueBuildAllEntries(): AreaIndexEntry[] {
 }
 
 /** Une los años (en orden) en el índice y los ficheros de zona. avg = Math.round(sum/count); count 0 → avg y min null. Zonas sin ningún dato se omiten.
- * Orden: France, regiones (orden de REGIONS), departamentos (orden de DEPARTMENTS), redes (orden de BRAND_GROUPS). Nombres de geo.ts. */
+ * Orden: France, regiones (orden de REGIONS), departamentos (orden de DEPARTMENTS), redes (orden de BRAND_GROUPS). Nombres de geo.ts y brands.ts. */
 export function mergeYearResults(
   results: readonly YearResult[],
   generatedAt: string

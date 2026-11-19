@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import type { YearResult } from '../src/lib/historiqueBuild.ts';
 import {
-  historiqueBrandResolver,
+  historiqueBrandsOf,
+  historiqueIsCacheUsable,
   isZipFinal,
   parseHistoriqueArgs,
   resolveHistoriqueExitCode,
@@ -44,16 +46,54 @@ test('isZipFinal: definitivo a partir del 3 de enero del año siguiente (hora lo
   assert.equal(isZipFinal(2020, new Date(2026, 5, 1).getTime()), true);
 });
 
-test('historiqueBrandResolver: resuelve el slug de la red por id y devuelve null sin red o sin nombre', () => {
-  const resolver = historiqueBrandResolver(
+test('historiqueBrandsOf: resuelve el slug de la red por id y devuelve null sin red o sin nombre', () => {
+  const { brandOfStation } = historiqueBrandsOf(
     new Map([
       ['1', 'Total Access'],
       ['2', 'Garage Denis'],
     ])
   );
-  assert.equal(resolver('1'), 'totalenergies');
-  assert.equal(resolver('2'), null);
-  assert.equal(resolver('3'), null);
+  assert.equal(brandOfStation('1'), 'totalenergies');
+  assert.equal(brandOfStation('2'), null);
+  assert.equal(brandOfStation('3'), null);
+});
+
+test('historiqueBrandsOf: la huella cambia si cambia la red de una estación', () => {
+  const before = historiqueBrandsOf(new Map([['1', 'Total Access']])).signature;
+  assert.equal(before, historiqueBrandsOf(new Map([['1', 'Total Access']])).signature);
+  assert.notEqual(before, historiqueBrandsOf(new Map([['1', 'Shell']])).signature);
+});
+
+const CACHE_ZIP = { size: 100, mtimeMs: 5 };
+const CACHE_WEEKS = ['2020-01-06'];
+
+function cacheYear(overrides: Partial<YearResult> = {}): YearResult {
+  return {
+    version: 2,
+    year: 2020,
+    weeks: CACHE_WEEKS,
+    zipSize: CACHE_ZIP.size,
+    zipMtimeMs: CACHE_ZIP.mtimeMs,
+    brandsSignature: 'firma',
+    areas: {},
+    carryOut: {},
+    partitionFiles: ['75/2020.json'],
+    ...overrides,
+  };
+}
+
+test('historiqueIsCacheUsable: todo igual → se reutiliza', () => {
+  assert.equal(historiqueIsCacheUsable(cacheYear(), CACHE_WEEKS, CACHE_ZIP, 'firma', () => true), true);
+});
+
+test('historiqueIsCacheUsable: versión vieja, firma distinta, zip, semanas o partición ausente → se recalcula', () => {
+  const usable = (cached: YearResult, signature = 'firma', exists = true, zip = CACHE_ZIP) =>
+    historiqueIsCacheUsable(cached, CACHE_WEEKS, zip, signature, () => exists);
+  assert.equal(usable(cacheYear({ version: 1 as unknown as 2 })), false);
+  assert.equal(usable(cacheYear(), 'otra'), false);
+  assert.equal(usable(cacheYear(), 'firma', false), false);
+  assert.equal(usable(cacheYear(), 'firma', true, { size: 101, mtimeMs: 5 }), false);
+  assert.equal(usable(cacheYear({ weeks: ['2020-01-13'] })), false);
 });
 
 test('resolveHistoriqueExitCode: 0 sin fallos, 1 con años fallidos', () => {

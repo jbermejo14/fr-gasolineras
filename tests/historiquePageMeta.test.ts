@@ -49,6 +49,13 @@ describe('historiquePageMeta', () => {
     assert.ok(description.length <= 160, `${description.length} caractères`);
   });
 
+  it('descripción de una marca: « chez » y cifras de gazole', () => {
+    const brand = { ...area([2000, 1400, 1500]), kind: 'marque' as const, slug: 'totalenergies', name: 'TotalEnergies' };
+    const description = buildHistoriqueDescription(brand, WEEKS);
+    assert.ok(description.startsWith('Prix du gazole et du SP95-E10 chez TotalEnergies : Gazole à'));
+    assert.ok(description.length <= 160, `${description.length} caractères`);
+  });
+
   it('descripción: nombra la zona y nunca pasa de 160 caracteres', () => {
     const named = { ...area([2000, 1400, 1500]), kind: 'departement' as const, name: 'Alpes-de-Haute-Provence' };
     const description = buildHistoriqueDescription(named, WEEKS);

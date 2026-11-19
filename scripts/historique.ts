@@ -7,8 +7,8 @@ import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 import { readAnnualZip, readZipEntries } from '../src/lib/annualArchive.ts';
 import { brandGroupOf } from '../src/lib/brands.ts';
-import { YearAccumulator, mergeYearResults } from '../src/lib/historiqueBuild.ts';
-import type { CarryState, YearResult } from '../src/lib/historiqueBuild.ts';
+import { HISTORY_YEAR_RESULT_VERSION, YearAccumulator, computeBrandsSignature, mergeYearResults } from '../src/lib/historiqueBuild.ts';
+import type { BrandOfStation, CarryState, YearResult } from '../src/lib/historiqueBuild.ts';
 import { HISTORY_FIRST_YEAR, HISTORY_START_DATE, listMondays, yearOfIso } from '../src/lib/historiqueFormat.ts';
 import { loadStationNames } from '../src/lib/stationNames.ts';
 
@@ -24,7 +24,6 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_DATE_LENGTH = 10;
 const FINAL_ZIP_MONTH_INDEX = 0;
 const FINAL_ZIP_DAY = 3;
-const CACHE_FORMAT_VERSION = 2;
 const NUMBER_LOCALE = 'fr-FR';
 
 const OPTION_UNTIL_PREFIX = '--hasta=';
@@ -188,19 +187,36 @@ function historiqueLoadYearCache(year: number): YearResult | null {
   }
 }
 
-function historiqueIsCacheUsable(cached: YearResult, weeks: readonly string[], zipFile: string): boolean {
-  const stat = fs.statSync(zipFile);
-  return (
-    cached.version === CACHE_FORMAT_VERSION &&
-    cached.weeks.length === weeks.length &&
-    cached.weeks.every((week, index) => week === weeks[index]) &&
-    cached.zipSize === stat.size &&
-    cached.zipMtimeMs === stat.mtimeMs &&
-    cached.partitionFiles.every((relative) => fs.existsSync(path.join(STATIONS_DIR, relative)))
-  );
+/** Zip con el que se calcula (o se comprueba) un año. */
+export interface HistoriqueZipInfo {
+  size: number;
+  mtimeMs: number;
 }
 
-type BrandOfStation = (id: string) => string | null;
+/** Redes de las estaciones: función de consulta y huella para invalidar la caché si cambian. */
+export interface HistoriqueBrands {
+  brandOfStation: BrandOfStation;
+  signature: string;
+}
+
+/** Una caché de año vale si coinciden versión, semanas, zip, huella de redes y existen todas sus particiones. */
+export function historiqueIsCacheUsable(
+  cached: YearResult,
+  weeks: readonly string[],
+  zip: HistoriqueZipInfo,
+  brandsSignature: string,
+  partitionExists: (relative: string) => boolean
+): boolean {
+  return (
+    cached.version === HISTORY_YEAR_RESULT_VERSION &&
+    cached.brandsSignature === brandsSignature &&
+    cached.weeks.length === weeks.length &&
+    cached.weeks.every((week, index) => week === weeks[index]) &&
+    cached.zipSize === zip.size &&
+    cached.zipMtimeMs === zip.mtimeMs &&
+    cached.partitionFiles.every(partitionExists)
+  );
+}
 
 interface HistoriqueYearOutcome {
   result: YearResult;
@@ -211,11 +227,11 @@ async function historiqueProcessYear(
   year: number,
   weeks: readonly string[],
   carryIn: Readonly<Record<string, CarryState>>,
-  brandOfStation: BrandOfStation
+  brands: HistoriqueBrands
 ): Promise<YearResult> {
   const startedAt = Date.now();
   const zipFile = historiqueZipPath(year);
-  const accumulator = new YearAccumulator(year, weeks, carryIn, brandOfStation);
+  const accumulator = new YearAccumulator(year, weeks, carryIn, brands.brandOfStation);
   await readAnnualZip(zipFile, (station) => accumulator.addStation(station));
   const { partitions, result } = accumulator.build();
   const partitionFiles = partitions.map((partition) => `${partition.departmentCode}/${year}.json`);
@@ -223,7 +239,7 @@ async function historiqueProcessYear(
     historiqueWriteJson(path.join(STATIONS_DIR, partitionFiles[index]), partition);
   });
   const stat = fs.statSync(zipFile);
-  const yearResult: YearResult = { ...result, zipSize: stat.size, zipMtimeMs: stat.mtimeMs, partitionFiles };
+  const yearResult: YearResult = { ...result, zipSize: stat.size, zipMtimeMs: stat.mtimeMs, brandsSignature: brands.signature, partitionFiles };
   historiqueWriteFileAtomic(historiqueYearCacheFile(year), zlib.gzipSync(JSON.stringify(yearResult)));
   const seconds = Math.round((Date.now() - startedAt) / MILLIS_PER_SECOND);
   const stations = Object.keys(result.carryOut).length.toLocaleString(NUMBER_LOCALE);
@@ -235,16 +251,18 @@ async function historiqueRunYear(
   year: number,
   args: HistoriqueArgs,
   previous: HistoriqueYearOutcome | null,
-  brandOfStation: BrandOfStation
+  brands: HistoriqueBrands
 ): Promise<HistoriqueYearOutcome> {
   await historiqueEnsureZip(year);
   const weeks = historiqueWeeksOfYear(year, args.until, new Date());
   const cached = args.rebuild || (year > HISTORY_FIRST_YEAR && !previous?.reused) ? null : historiqueLoadYearCache(year);
-  if (cached && historiqueIsCacheUsable(cached, weeks, historiqueZipPath(year))) {
+  if (cached && historiqueIsCacheUsable(cached, weeks, fs.statSync(historiqueZipPath(year)), brands.signature, (relative) =>
+      fs.existsSync(path.join(STATIONS_DIR, relative))
+    )) {
     console.log(`[${year}] reutilizado de la caché`);
     return { result: cached, reused: true };
   }
-  const result = await historiqueProcessYear(year, weeks, previous?.result.carryOut ?? {}, brandOfStation);
+  const result = await historiqueProcessYear(year, weeks, previous?.result.carryOut ?? {}, brands);
   return { result, reused: false };
 }
 
@@ -258,7 +276,7 @@ interface HistoriqueYearsReport {
 async function historiqueRunYears(
   years: readonly number[],
   args: HistoriqueArgs,
-  brandOfStation: BrandOfStation
+  brands: HistoriqueBrands
 ): Promise<HistoriqueYearsReport> {
   const report: HistoriqueYearsReport = { results: [], failed: [], skipped: [] };
   let previous: HistoriqueYearOutcome | null = null;
@@ -268,7 +286,7 @@ async function historiqueRunYears(
       continue;
     }
     try {
-      previous = await historiqueRunYear(year, args, previous, brandOfStation);
+      previous = await historiqueRunYear(year, args, previous, brands);
       report.results.push(previous.result);
     } catch (error) {
       report.failed.push(year);
@@ -307,19 +325,24 @@ export function resolveHistoriqueExitCode(failedYears: number): number {
   return failedYears > 0 ? EXIT_FAILURE : EXIT_OK;
 }
 
-/** Resuelve la red de cada estación con el CSV de nombres; sin él no hay zonas de marca y se avisa. */
-export function historiqueBrandResolver(names: Map<string, string> = loadStationNames()): BrandOfStation {
-  if (names.size === 0) {
-    console.warn('Aviso: no hay nombres de estaciones (data/cache/enseignes.csv): el histórico se genera sin zonas de marca. Ejecuta `npm run preparar-datos`.');
+/** Red de cada estación con nombre. Sin nombres el mapa sale vacío (loadStationNames ya avisa) y no hay zonas de marca. */
+export function historiqueBrandsOf(names: ReadonlyMap<string, string>): HistoriqueBrands {
+  const brandByStation = new Map<string, string>();
+  for (const [id, name] of names) {
+    const brand = brandGroupOf(name);
+    if (brand) brandByStation.set(id, brand.slug);
   }
-  return (id) => brandGroupOf(names.get(id) ?? null)?.slug ?? null;
+  return {
+    brandOfStation: (id) => brandByStation.get(id) ?? null,
+    signature: computeBrandsSignature(brandByStation),
+  };
 }
 
 async function historiqueMain(): Promise<number> {
   const args = parseHistoriqueArgs(process.argv.slice(2));
   const years = yearsToProcess(args.until);
   console.log(`Años ${years[0]}-${years[years.length - 1]}${args.rebuild ? ' (reproceso completo)' : ''}.`);
-  const report = await historiqueRunYears(years, args, historiqueBrandResolver());
+  const report = await historiqueRunYears(years, args, historiqueBrandsOf(loadStationNames()));
   const filesWritten = report.failed.length === 0 ? historiqueWriteAggregates(report.results) : null;
   historiquePrintSummary(report, filesWritten);
   return resolveHistoriqueExitCode(report.failed.length);

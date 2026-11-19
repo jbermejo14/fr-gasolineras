@@ -5,6 +5,7 @@ import { formatIsoDateFr } from '../src/lib/format.ts';
 import {
   HISTORY_HEADLINE_FUELS,
   buildAreaIntro,
+  describeAreaPlace,
   formatMilliEuro,
   formatSignedPercent,
   summarizeSeries,
@@ -135,6 +136,13 @@ describe('formatos franceses', () => {
     assert.equal(formatSignedPercent(0), `0,0${NBSP}%`);
     assert.equal(formatSignedPercent(0.04), `0,0${NBSP}%`);
     assert.equal(formatSignedPercent(-0.04), `0,0${NBSP}%`);
+  });
+});
+
+describe('describeAreaPlace', () => {
+  it('marque: « chez » con y sin mayúscula', () => {
+    assert.equal(describeAreaPlace('marque', 'TotalEnergies'), 'chez TotalEnergies');
+    assert.equal(describeAreaPlace('marque', 'TotalEnergies', true), 'Chez TotalEnergies');
   });
 });
 

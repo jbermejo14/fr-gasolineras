@@ -20,7 +20,10 @@ interface HistoriqueAreaProps {
 const HISTORIQUE_AREA_LESS_THAN_PATTERN = /</g;
 const HISTORIQUE_AREA_LESS_THAN_ESCAPED = '\\u003c';
 const HISTORIQUE_AREA_HOME_LABEL = 'Historique des prix';
+const HISTORIQUE_AREA_NOTE_ZONE = 'de la zone';
+const HISTORIQUE_AREA_NOTE_BRAND = "de l'enseigne";
 const HISTORIQUE_AREA_BRAND_NOTE = 'Les stations sont rattachées à leur enseigne actuelle pour toute la période.';
+const HISTORIQUE_AREA_FRANCE_NAME = 'France';
 const HISTORIQUE_AREA_CARD_CLASS = 'rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] p-4 md:p-8 shadow-sm';
 
 /** Serializa el JSON-LD escapando `<` para que un nombre con `</script>` no cierre la etiqueta. */
@@ -38,6 +41,11 @@ function historiqueAreaBreadcrumbs(area: AreaHistory) {
   return [home, { name: area.name, href: buildHistoriquePath(area.kind, area.slug) }];
 }
 
+/** « de la zone » en general; en una marca el conjunto es la red, no un lugar. */
+function historiqueAreaNoteScope(area: AreaHistory): string {
+  return area.kind === 'marque' ? HISTORIQUE_AREA_NOTE_BRAND : HISTORIQUE_AREA_NOTE_ZONE;
+}
+
 function historiqueAreaSchemas(area: AreaHistory, weeks: readonly string[]) {
   const url = absoluteUrl(buildHistoriquePath(area.kind, area.slug));
   const crumbs = [
@@ -53,12 +61,12 @@ function historiqueAreaSchemas(area: AreaHistory, weeks: readonly string[]) {
       url,
       firstDate: weeks[0],
       lastDate: weeks[weeks.length - 1],
-      placeName: area.name,
+      placeName: area.kind === 'marque' ? HISTORIQUE_AREA_FRANCE_NAME : area.name,
     }),
   ];
 }
 
-/** Plantilla compartida de las páginas de histórico (Francia, región y departamento). */
+/** Plantilla compartida de las páginas de histórico (Francia, región, departamento y marca). */
 export function HistoriqueArea({ areaFile, national }: HistoriqueAreaProps) {
   const { area, weeks } = areaFile;
 
@@ -102,7 +110,7 @@ export function HistoriqueArea({ areaFile, national }: HistoriqueAreaProps) {
         <HistoriqueAreaLinks kind={area.kind} slug={area.slug} name={area.name} parentSlug={area.parentSlug} />
 
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Chaque point correspond au prix moyen de toutes les stations de la zone le lundi de la semaine. Source :
+          Chaque point correspond au prix moyen de toutes les stations {historiqueAreaNoteScope(area)} le lundi de la semaine. Source :
           prix-carburants.gouv.fr. Dernière donnée : {formatIsoDateFr(weeks[weeks.length - 1])}.
           {area.kind === 'marque' ? ` ${HISTORIQUE_AREA_BRAND_NOTE}` : ''}
         </p>
