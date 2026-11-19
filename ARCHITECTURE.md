@@ -581,3 +581,144 @@ Idéntico a `../gasolineras`: paleta negro/naranja con modo claro y oscuro (`glo
 - Unas 15 500 páginas más ~1 060 particiones de histórico: unos 17 500 ficheros en el Worker (límite del plan gratuito: 20 000). `comprobarLimitesPages` de `ododex-sitio` avisa si se supera.
 - Primeras semanas de 2016: las estaciones sin cambio de precio desde finales de 2015 salen sin dato hasta su primer cambio (no se lee 2015).
 - Las estaciones sin municipio en el flujo (4 de 9 825 hoy) no se publican.
+
+# Parte B — Marcas (enseignes) de las estaciones
+
+Añadida el 2026-11-19 a petición del titular: mostrar la marca de cada estación, con logos y páginas por marca.
+
+## B.1 Objetivo y alcance
+
+### Qué hace
+
+- Cada estación muestra su **nombre comercial** (« Carrefour Market », « Total Access », « E.Leclerc ») cuando la fuente lo trae (98,5 % hoy) y, si pertenece a una de las **redes** de la tabla `BRAND_GROUPS`, su logo.
+- Buscador: filtro por red. Tarjetas, ventana del mapa, ficha, tabla del municipio y listados: nombre y logo.
+- Páginas nuevas: `/marque` (índice de redes), `/marque/[marque]` (precios de hoy de la red en Francia) y `/historique/marque/[marque]` (evolución semanal desde 2016).
+- Atribución ODbL visible en el pie y en las mentions légales.
+
+### Qué no hace
+
+- No corrige los nombres de la fuente: se muestran tal cual (salvo la regla de « ; » y « Indépendante »).
+- El histórico por marca usa la **marca actual** de cada estación para todas las semanas (no sabe de cambios de enseña ni de estaciones cerradas). Se dice así en la nota de metodología.
+- No hay páginas de marca por departamento ni por municipio.
+
+## B.2 Fuente
+
+- « Référentiel des noms et enseignes de stations-service (Enrichi par OpenStreetMap) », Chiffrex, en data.gouv.fr: https://www.data.gouv.fr/datasets/referentiel-des-noms-et-enseignes-de-stations-service-enrichi-par-openstreetmap
+- URL estable de descarga (redirige al CSV del domingo): `https://www.data.gouv.fr/api/1/datasets/r/0207ded0-2d19-47af-b1a6-62915ec1b721` (≈1,3 MB, se actualiza cada domingo).
+- CSV UTF-8 separado por comas, con comillas dobles cuando hace falta (puede haber comas dentro). Cabecera: `id_station_officiel,nom_normalise,adresse,ville,code_postal,latitude_osm,longitude_osm,source_enrichissement`. Solo se usan las dos primeras columnas.
+- Reglas del nombre: recortar; si contiene `;` (« Super U;Station U ») se toma la primera parte; vacío o « Indépendante » → sin nombre.
+- Muestra real: `tests/fixtures/enseignes-sample.csv` (32 filas, ids de `prix-sample.json` y casos con `;`, comas y « Indépendante »).
+- **Licencia ODbL 1.0.** Mención obligatoria, visible: « Noms et enseignes des stations : Chiffrex (chiffrex.fr), d'après OpenStreetMap – © les contributeurs d'OpenStreetMap, ODbL », con enlace al conjunto de datos y a https://opendatacommons.org/licenses/odbl/1-0/. `public/datos/stations.json` pasa a ser una base derivada: las mentions légales dicen que ese fichero se publica bajo ODbL.
+
+## B.3 Módulos
+
+### B1 — Datos de marcas
+
+**Ficheros:** `src/lib/brands.ts`, `src/lib/stationNames.ts`, `tests/brands.test.ts`, `tests/stationNames.test.ts`; modifica `src/lib/prixCarburants.ts`, `src/lib/prixSnapshot.ts`, `src/lib/stationPayload.ts`, `scripts/preparar-datos.ts` y sus pruebas.
+
+`src/lib/brands.ts` (tabla fija y emparejamiento; sin dependencias):
+
+```ts
+export interface BrandGroup {
+  slug: string;          // 'totalenergies'
+  name: string;          // 'TotalEnergies'
+  logo: string | null;   // ruta en public/, p. ej. '/logos/totalenergies.svg'; null → distintivo de texto
+  keywords: string[];    // en minúsculas y sin tildes; se comparan como palabra completa o frase completa
+}
+/** Redes con página propia, en este orden (de más a menos estaciones). */
+export const BRAND_GROUPS: readonly BrandGroup[];
+export function findBrandGroupBySlug(slug: string): BrandGroup | null;
+/** Red de un nombre comercial: normaliza (minúsculas, sin tildes, '-' y '.' → espacio) y busca la primera keyword que aparezca como palabra o frase completa. null si ninguna. */
+export function brandGroupOf(name: string | null): BrandGroup | null;
+```
+
+| slug | name | keywords | logo inicial |
+|---|---|---|---|
+| totalenergies | TotalEnergies | totalenergies, total access, total contact, total | null |
+| intermarche | Intermarché | intermarche | null |
+| carrefour | Carrefour | carrefour | `/logos/carrefour.webp` |
+| leclerc | E.Leclerc | leclerc | null |
+| avia | Avia | avia | null |
+| systeme-u | Système U | systeme u, super u, hyper u, station u, u express, la station u, u (solo si el nombre entero es « U ») | null |
+| esso | Esso | esso | null |
+| auchan | Auchan | auchan | null |
+| eni | Eni | eni, agip | null |
+| netto | Netto | netto | null |
+| elan | Elan | elan | null |
+| dyneff | Dyneff | dyneff | null |
+| bp | BP | bp | `/logos/bp.webp` |
+| shell | Shell | shell | `/logos/shell.webp` |
+| vito | Vito | vito | null |
+| match | Match | match | null |
+| spar | Spar | spar | null |
+| aire-c | Aire C | aire c | null |
+| dats-24 | DATS 24 | dats 24 | null |
+
+Los logos que faltan se añaden después (fichero en `public/logos/` y su ruta en la tabla); hasta entonces se pinta un distintivo de texto.
+
+`src/lib/stationNames.ts`:
+
+```ts
+export const STATION_NAMES_SOURCE_URL = 'https://www.data.gouv.fr/api/1/datasets/r/0207ded0-2d19-47af-b1a6-62915ec1b721';
+export const STATION_NAMES_FILE: string;   // data/cache/enseignes.csv
+/** Parser CSV con comillas (RFC 4180). Devuelve id → nombre limpio según B.2; ignora filas sin id o sin nombre. Lanza Error si la cabecera no empieza por id_station_officiel,nom_normalise. */
+export function parseStationNamesCsv(text: string): Map<string, string>;
+/** Descarga el CSV (timeout 60 s, 3 reintentos 5/15/45 s) y lo guarda en file. */
+export async function downloadStationNames(file?: string): Promise<void>;
+/** Lee el fichero; si no existe devuelve un Map vacío y avisa por consola (la web funciona sin marcas). */
+export function loadStationNames(file?: string): Map<string, string>;
+```
+
+Cambios en los datos:
+
+- `Station` añade `name: string | null` y `brandSlug: string | null` (de `brandGroupOf(name)`).
+- `processRawPrixData(raw, names = new Map())`: asigna `name` por id.
+- `PrixSnapshot` añade `brands: Map<string, Station[]>` (clave `brandSlug`, solo redes con alguna estación, en el orden de `BRAND_GROUPS`).
+- `loadPrixSnapshot` carga también `loadStationNames()`.
+- `LightStation` añade `name` y `brandSlug` (14 claves).
+- `preparar-datos`: descarga primero el flujo (obligatorio) y luego el CSV de nombres. Si falla el CSV, avisa en español (« No se pudieron descargar los nombres de las estaciones: se usa la copia anterior » o « … la web se publica sin marcas ») y continúa; el resumen dice cuántas estaciones tienen nombre y cuántas red.
+- Nombre para mostrar de una estación (helper `stationDisplayName(station)` en `prixCarburants.ts`): `name` si existe; si no, `address`.
+
+**Aceptación:** `parseStationNamesCsv` con la muestra (comas entre comillas, « ; », « Indépendante », cabecera mala); `brandGroupOf` con todos los nombres de la tabla y con trampas: « Super U;Station U » → systeme-u (tras limpiar), « U » → systeme-u, « Station U » → systeme-u, « Hyper-U » → systeme-u, « Total Access » → totalenergies, « Relais des images (Total) » → totalenergies, « Eni » sí pero « Garage Denis » no, « Spar » sí pero « Sparkle » no, « BP » sí pero « Bpost » no, « Match » sí, « Station-Essence Intermarché » → intermarche, « Indépendante » → null; `processRawPrixData` con nombres de la muestra; payload con 14 claves.
+
+### B2 — Interfaz
+
+**Ficheros:** `src/components/StationBrandBadge.tsx` (nuevo), y modifica `StationCard.tsx`, `leafletMapHtml.ts`, `GasFinderLogic.ts`, `GasFinderFilters.tsx`, `InteractiveGasFinder.tsx`, `StationHero.tsx`, `StationNearby.tsx`, `CommuneTable.tsx`, `DepartmentCheapest.tsx` (si muestra nombres), `src/app/station/[slug]/page.tsx`, `src/lib/seo.ts`, `src/components/Footer.tsx`, `src/app/mentions-legales/page.tsx`, `src/app/confidentialite/page.tsx` (solo si menciona las fuentes), y sus pruebas.
+
+- `StationBrandBadge({ name, brandSlug, size: 'sm' | 'md' })`: logo de la red si `logo` no es null (`<img>` con `assetPath`, `alt` = nombre de la red, altura fija); si no, distintivo de texto con el nombre de la red (o el nombre comercial si no hay red). Sin nombre → nada.
+- Tarjeta, ventana del mapa, cercanas y tabla del municipio: nombre comercial como título (dirección debajo); sin nombre, como hoy.
+- Ficha: H1 « {nom} – Station-service {adresse} à {ville} » si hay nombre; título SEO igual; logo en la cabecera; enlace « Toutes les stations {Réseau} » a `/marque/{slug}` si tiene red.
+- Buscador: desplegable « Toutes les enseignes » + redes de `BRAND_GROUPS` presentes en los datos; filtra por `brandSlug`. La búsqueda de texto también mira el nombre.
+- `getGasStationSchema`: `name` con el nombre comercial; `brand: { '@type': 'Brand', name }` si hay red.
+- Pie: línea de atribución ODbL corta con enlace; mentions légales: sección « Noms et enseignes des stations » con la mención completa, enlaces y la frase de que `stations.json` se publica bajo ODbL; frase de marcas: « Les noms et logos des enseignes appartiennent à leurs titulaires et ne servent qu'à identifier les stations. »
+
+### B3 — Páginas por marca
+
+**Ficheros:** `src/app/marque/page.tsx`, `src/app/marque/[marque]/page.tsx`, componentes `src/components/Brand*.tsx`, funciones puras en `src/lib/brandInsights.ts` con `tests/brandInsights.test.ts`; modifica `src/app/sitemap.ts` (entradas de marca) y `src/app/page.tsx` (enlace a las redes).
+
+- `/marque`: H1 « Prix des carburants par enseigne », tabla de redes con logo, número de estaciones y precio medio de gazole y SP95-E10 frente a Francia, ordenada por número de estaciones.
+- `/marque/[marque]`: H1 « Prix des carburants chez {Réseau} aujourd'hui »; cifras clave (estaciones, media gazole y E10 frente a la nacional, diferencia en un plein de 50 L); las 6 más baratas de gazole y de E10 (StationCard); tabla por departamento (estaciones, media gazole, mínimo con enlace a la estación); enlace a `/historique/marque/{slug}`; texto SEO propio con cifras; 2 `AdSlot`; JSON-LD BreadcrumbList.
+- Solo se generan las redes con al menos una estación hoy.
+- Portada: bloque « Prix par enseigne » con las redes (logo/nombre y media gazole) enlazando a `/marque/{slug}` y a `/marque`.
+
+### B4 — Histórico por marca
+
+**Ficheros:** modifica `src/lib/historiqueFormat.ts` (`AreaKind` añade `'marque'`; `YearResult` pasa a `version: 2` para invalidar la caché), `src/lib/historiqueBuild.ts`, `scripts/historique.ts`, `src/lib/historiquePageMeta.ts`, `src/lib/historiqueStats.ts`, `src/components/HistoriqueAreaLinks.tsx`, y crea `src/app/historique/marque/[marque]/page.tsx`; pruebas correspondientes.
+
+- `YearAccumulator(year, weeks, carryIn, brandOfStation?: (id: string) => string | null)`: además de France/región/departamento, suma cada estación a `marque:{slug}` si tiene red.
+- El script carga `loadStationNames()` y pasa `(id) => brandGroupOf(names.get(id) ?? null)?.slug ?? null`. Sin fichero de nombres → sin zonas de marca, con aviso.
+- `mergeYearResults`: zonas de marca al final, en el orden de `BRAND_GROUPS`, `name` de la tabla.
+- Textos: « chez TotalEnergies » (`describeAreaPlace` con kind `marque`), título « Évolution du prix des carburants chez {Réseau} depuis 2016 », nota de metodología añadida: « Les stations sont rattachées à leur enseigne actuelle pour toute la période. »
+- Enlaces: `/historique` → lista de redes; marca → `/marque/{slug}` y Francia; sitemap con las URLs de marca.
+
+## B.4 Orden
+
+1. B1.
+2. B2 y B4 en paralelo (ficheros disjuntos).
+3. B3 (usa los componentes de B2 y enlaza a B4).
+4. Sesión principal: `npm run historique -- --rehacer` (la versión 2 de la caché obliga a recalcular), compilación, verificación en pantalla, logos, documentación.
+
+## B.5 Límites
+
+- Unas 40 páginas más (índice, ~19 marcas y su histórico): unos 17 900 ficheros por despliegue.
+- Nombres de OpenStreetMap: puede haber errores puntuales; la fuente acepta correcciones en carburants.chiffrex.fr.
