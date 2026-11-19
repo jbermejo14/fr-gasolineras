@@ -31,3 +31,6 @@ Thumbs.db
 
 # Datos personales del titular (ver config/titular.example.json)
 /config/titular.json
+
+# Caché de TypeScript
+tsconfig.tsbuildinfo
