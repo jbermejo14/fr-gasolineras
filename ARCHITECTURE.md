@@ -146,7 +146,7 @@ export function slugify(text: string): string;
  * Normaliza un nombre de municipio o una dirección: recorta, colapsa espacios y, si está entero
  * en mayúsculas, lo pasa a "tipo título" en francés ('SAINT-DENIS-LÈS-BOURG' → 'Saint-Denis-lès-Bourg',
  * 'ROUTE NATIONALE 7' → 'Route Nationale 7'). Las palabras de/du/des/la/le/les/lès/sur/sous/en/et/aux/au/l'/d'
- * van en minúscula salvo al principio. Si ya tiene minúsculas, lo devuelve sin cambiar las letras.
+ * van en minúscula salvo al principio. Lo mismo si está entero en minúsculas ('16 rue chateaubriand' → '16 Rue Chateaubriand'). Si mezcla mayúsculas y minúsculas, lo devuelve sin cambiar las letras.
  */
 export function normalizePlaceText(text: string): string;
 ```

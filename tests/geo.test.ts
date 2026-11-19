@@ -69,7 +69,10 @@ test('slugify', () => {
   assert.equal(slugify('--a   b--'), 'a-b');
 });
 
-test('normalizePlaceText pasa a tipo título solo si todo está en mayúsculas', () => {
+test('normalizePlaceText pasa a tipo título si todo está en mayúsculas o en minúsculas', () => {
+  assert.equal(normalizePlaceText('16 rue chateaubriand'), '16 Rue Chateaubriand');
+  assert.equal(normalizePlaceText('saint-denis-lès-bourg'), 'Saint-Denis-lès-Bourg');
+  assert.equal(normalizePlaceText('1234'), '1234');
   assert.equal(normalizePlaceText('SAINT-DENIS-LÈS-BOURG'), 'Saint-Denis-lès-Bourg');
   assert.equal(normalizePlaceText('ROUTE NATIONALE 7'), 'Route Nationale 7');
   assert.equal(normalizePlaceText('LA ROCHE-SUR-YON'), 'La Roche-sur-Yon');

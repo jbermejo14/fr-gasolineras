@@ -50,7 +50,7 @@ test('sin ninguna fecha de actualización lanza un error explícito', () => {
 
 test('normaliza dirección, municipio, id, tipo de vía y automate 24/24', () => {
   const brehan = station('56580001');
-  assert.equal(brehan.address, '16 rue chateaubriand');
+  assert.equal(brehan.address, '16 Rue Chateaubriand');
   assert.equal(brehan.city, 'Bréhan');
   assert.equal(brehan.communeSlug, 'brehan');
   assert.equal(brehan.slug, 'brehan-16-rue-chateaubriand');

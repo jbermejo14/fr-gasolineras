@@ -155,6 +155,8 @@ function geoToTitleCase(text: string): string {
  */
 export function normalizePlaceText(text: string): string {
   const collapsed = text.trim().replace(/\s+/g, ' ');
-  const isAllUppercase = collapsed === collapsed.toUpperCase() && collapsed !== collapsed.toLowerCase();
-  return isAllUppercase ? geoToTitleCase(collapsed) : collapsed;
+  const hasLetters = collapsed !== collapsed.toLowerCase() || collapsed !== collapsed.toUpperCase();
+  // Los textos escritos enteros en mayúsculas o enteros en minúsculas no tienen mayúsculas fiables.
+  const isSingleCase = collapsed === collapsed.toUpperCase() || collapsed === collapsed.toLowerCase();
+  return hasLetters && isSingleCase ? geoToTitleCase(collapsed) : collapsed;
 }

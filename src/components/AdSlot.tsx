@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { getAdSenseClient, getAdSenseSlot } from '@/lib/adsense';
 
-const AD_SLOT_LABEL = 'Publicidad';
+const AD_SLOT_LABEL = 'Publicité';
 
 declare global {
   interface Window {

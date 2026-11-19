@@ -72,8 +72,8 @@ describe('configuración de AdSlot', () => {
 describe('marcado de AdSlot', () => {
   const source = readFileSync(join('src', 'components', 'AdSlot.tsx'), 'utf8');
 
-  it('declara los atributos de la unidad y el texto Publicidad', () => {
-    for (const fragment of ['className="adsbygoogle"', 'data-ad-client={client}', 'data-ad-slot={slot}', 'data-ad-format="auto"', "'Publicidad'"]) {
+  it('declara los atributos de la unidad y el texto Publicité', () => {
+    for (const fragment of ['className="adsbygoogle"', 'data-ad-client={client}', 'data-ad-slot={slot}', 'data-ad-format="auto"', "'Publicité'"]) {
       assert.ok(source.includes(fragment), fragment);
     }
   });
