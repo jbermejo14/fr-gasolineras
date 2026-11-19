@@ -149,7 +149,7 @@ interface HistoriqueStatsFuelInfo {
   summary: SeriesSummary;
 }
 
-/** Localización de una zona dentro de una frase: « en France », « en Bretagne », « dans le département du Morbihan ». */
+/** Localización de una zona dentro de una frase: « en France », « en Bretagne », « dans le département du Morbihan », « chez TotalEnergies ». */
 export function describeAreaPlace(kind: AreaKind, name: string, capitalized = false): string {
   switch (kind) {
     case 'france':
@@ -160,6 +160,8 @@ export function describeAreaPlace(kind: AreaKind, name: string, capitalized = fa
       const text = `dans le département ${departmentOfName(name)}`;
       return capitalized ? `D${text.slice(1)}` : text;
     }
+    case 'marque':
+      return `${capitalized ? 'Chez' : 'chez'} ${name}`;
   }
 }
 

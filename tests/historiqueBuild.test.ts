@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { YearAccumulator, mergeYearResults, weeklyStationSeries } from '../src/lib/historiqueBuild.ts';
 import type { CarryState, YearResult } from '../src/lib/historiqueBuild.ts';
 import type { AnnualStation, PriceRecord } from '../src/lib/annualArchive.ts';
+import { BRAND_GROUPS } from '../src/lib/brands.ts';
 import { DEPARTMENTS, REGIONS } from '../src/lib/geo.ts';
 import { HISTORY_FUELS, decodeDeltaSeries } from '../src/lib/historiqueFormat.ts';
 
@@ -79,6 +80,26 @@ test('YearAccumulator: sum, count y min por zona (Francia, región, departamento
   assert.deepEqual(result.areas[`region:${region.slug}`].gazole.count, [2, 2, 2]);
 });
 
+test('YearAccumulator: suma cada estación a la zona de su red y no a las sin red', () => {
+  const brandOf = (id: string) => (id === 'A' ? 'leclerc' : id === 'B' ? 'leclerc' : null);
+  const accumulator = new YearAccumulator(2020, MONDAYS, {}, brandOf);
+  accumulator.addStation(station('A', '75001', [record('2020-01-05T10:00:00', 1500)]));
+  accumulator.addStation(station('B', '99999', [record('2020-01-05T10:00:00', 1400)]));
+  accumulator.addStation(station('C', '75001', [record('2020-01-05T10:00:00', 1300)]));
+  const { result } = accumulator.build();
+  assert.deepEqual(result.areas['marque:leclerc'].gazole, { sum: [2900, 2900, 2900], count: [2, 2, 2], min: [1400, 1400, 1400] });
+  assert.equal(result.areas['france:france'].gazole.count[0], 3);
+  assert.deepEqual(Object.keys(result.areas).filter((key) => key.startsWith('marque:')), ['marque:leclerc']);
+  assert.equal(result.version, 2);
+});
+
+test('YearAccumulator: sin brandOfStation no hay zonas de marca', () => {
+  const accumulator = new YearAccumulator(2020, MONDAYS, {});
+  accumulator.addStation(station('A', '75001', [record('2020-01-05T10:00:00', 1500)]));
+  const { result } = accumulator.build();
+  assert.deepEqual(Object.keys(result.areas).filter((key) => key.startsWith('marque:')), []);
+});
+
 test('YearAccumulator: CP de Córcega se reparten entre 2A y 2B', () => {
   const accumulator = new YearAccumulator(2020, MONDAYS, {});
   accumulator.addStation(station('S', '20090', [record('2020-01-05T10:00:00', 1500)]));
@@ -119,7 +140,7 @@ test('YearAccumulator: carryIn de otro año y carryOut en el resultado', () => {
 });
 
 function yearResult(year: number, weeks: string[], areas: YearResult['areas']): YearResult {
-  return { version: 1, year, weeks, zipSize: 0, zipMtimeMs: 0, areas, carryOut: {}, partitionFiles: [] };
+  return { version: 2, year, weeks, zipSize: 0, zipMtimeMs: 0, areas, carryOut: {}, partitionFiles: [] };
 }
 
 function fuelTotals(sum: number[], count: number[], min: (number | null)[]) {
@@ -174,6 +195,25 @@ test('mergeYearResults: omite zonas vacías, ordena France, regiones y departame
   assert.equal(index.areas[3].name, firstDepartment.name);
   assert.equal(index.areas[3].parentSlug, REGIONS.find((region) => region.code === firstDepartment.regionCode)?.slug);
   assert.equal(areas[3].area.name, firstDepartment.name);
+});
+
+test('mergeYearResults: zonas de marca al final, en el orden de BRAND_GROUPS y con su nombre', () => {
+  const data = fuelTotals([1500], [1], [1500]);
+  const first = BRAND_GROUPS[0];
+  const last = BRAND_GROUPS[BRAND_GROUPS.length - 1];
+  const result = yearResult(2020, ['2020-01-06'], {
+    [`marque:${last.slug}`]: data,
+    [`marque:${first.slug}`]: data,
+    [`departement:${DEPARTMENTS[0].slug}`]: data,
+    'france:france': data,
+  });
+  const { index, areas } = mergeYearResults([result], 'x');
+  assert.deepEqual(
+    index.areas.map((entry) => `${entry.kind}:${entry.slug}`),
+    ['france:france', `departement:${DEPARTMENTS[0].slug}`, `marque:${first.slug}`, `marque:${last.slug}`]
+  );
+  assert.deepEqual(index.areas[2], { kind: 'marque', slug: first.slug, name: first.name });
+  assert.equal(areas[3].area.name, last.name);
 });
 
 test('mergeYearResults: un año sin una zona la rellena con huecos', () => {

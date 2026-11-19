@@ -27,6 +27,7 @@ export function buildHistoriqueTitle(kind: AreaKind, name: string, weeks: readon
     case 'france':
       return `Prix historique du gazole et de l'essence en France (${firstYear}-${yearOfIso(weeks[weeks.length - 1])})`;
     case 'region':
+    case 'marque':
       return `Évolution du prix des carburants ${describeAreaPlace(kind, name)} depuis ${firstYear}`;
     case 'departement':
       return `Prix historique des carburants ${describeAreaPlace(kind, name)} depuis ${firstYear}`;

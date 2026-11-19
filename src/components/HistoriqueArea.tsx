@@ -20,6 +20,7 @@ interface HistoriqueAreaProps {
 const HISTORIQUE_AREA_LESS_THAN_PATTERN = /</g;
 const HISTORIQUE_AREA_LESS_THAN_ESCAPED = '\\u003c';
 const HISTORIQUE_AREA_HOME_LABEL = 'Historique des prix';
+const HISTORIQUE_AREA_BRAND_NOTE = 'Les stations sont rattachées à leur enseigne actuelle pour toute la période.';
 const HISTORIQUE_AREA_CARD_CLASS = 'rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] p-4 md:p-8 shadow-sm';
 
 /** Serializa el JSON-LD escapando `<` para que un nombre con `</script>` no cierre la etiqueta. */
@@ -103,6 +104,7 @@ export function HistoriqueArea({ areaFile, national }: HistoriqueAreaProps) {
         <p className="text-xs text-[var(--text-muted)] leading-relaxed">
           Chaque point correspond au prix moyen de toutes les stations de la zone le lundi de la semaine. Source :
           prix-carburants.gouv.fr. Dernière donnée : {formatIsoDateFr(weeks[weeks.length - 1])}.
+          {area.kind === 'marque' ? ` ${HISTORIQUE_AREA_BRAND_NOTE}` : ''}
         </p>
 
         <AdSlot />

@@ -21,6 +21,8 @@ interface HistoriqueLinkGroup {
   links: HistoriqueLink[];
 }
 
+const HISTORIQUE_LINKS_BRAND_PATH = '/marque';
+
 const HISTORIQUE_LINKS_FRANCE_GROUP: HistoriqueLinkGroup = {
   title: 'Ensemble de la France',
   links: [{ label: 'France', href: buildHistoriquePath('france', 'france') }],
@@ -46,7 +48,10 @@ function historiqueLinksDepartementGroups(props: HistoriqueAreaLinksProps): Hist
 function historiqueLinksGroups(props: HistoriqueAreaLinksProps): HistoriqueLinkGroup[] {
   switch (props.kind) {
     case 'france':
-      return [{ title: 'Par région', links: historiqueLinksOf(getAreasByKind('region')) }];
+      return [
+        { title: 'Par région', links: historiqueLinksOf(getAreasByKind('region')) },
+        { title: 'Par enseigne', links: historiqueLinksOf(getAreasByKind('marque')) },
+      ];
     case 'region':
       return [
         {
@@ -57,6 +62,14 @@ function historiqueLinksGroups(props: HistoriqueAreaLinksProps): HistoriqueLinkG
       ];
     case 'departement':
       return historiqueLinksDepartementGroups(props);
+    case 'marque':
+      return [
+        {
+          title: "Prix d'aujourd'hui",
+          links: [{ label: `Stations-service ${props.name}`, href: `${HISTORIQUE_LINKS_BRAND_PATH}/${props.slug}` }],
+        },
+        HISTORIQUE_LINKS_FRANCE_GROUP,
+      ];
   }
 }
 

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  historiqueBrandResolver,
   isZipFinal,
   parseHistoriqueArgs,
   resolveHistoriqueExitCode,
@@ -41,6 +42,18 @@ test('isZipFinal: definitivo a partir del 3 de enero del año siguiente (hora lo
   assert.equal(isZipFinal(2020, new Date(2021, 0, 2, 23, 59, 59)), false);
   assert.equal(isZipFinal(2020, new Date(2020, 11, 31)), false);
   assert.equal(isZipFinal(2020, new Date(2026, 5, 1).getTime()), true);
+});
+
+test('historiqueBrandResolver: resuelve el slug de la red por id y devuelve null sin red o sin nombre', () => {
+  const resolver = historiqueBrandResolver(
+    new Map([
+      ['1', 'Total Access'],
+      ['2', 'Garage Denis'],
+    ])
+  );
+  assert.equal(resolver('1'), 'totalenergies');
+  assert.equal(resolver('2'), null);
+  assert.equal(resolver('3'), null);
 });
 
 test('resolveHistoriqueExitCode: 0 sin fallos, 1 con años fallidos', () => {

@@ -174,6 +174,7 @@ describe('buildAreaIntro', () => {
 
   it('una región se introduce con su preposición', () => {
     assert.match(buildAreaIntro(makeArea('region', 'Bretagne', gazole, e10), weeks, null), /^En Bretagne, /);
+    assert.match(buildAreaIntro(makeArea('marque', 'TotalEnergies', gazole, e10), weeks, null), /^Chez TotalEnergies, /);
     assert.match(buildAreaIntro(makeArea('region', 'Grand Est', gazole, e10), weeks, null), /^Dans le Grand Est, /);
     assert.match(buildAreaIntro(makeArea('region', 'Hauts-de-France', gazole, e10), weeks, null), /^Dans les Hauts-de-France, /);
   });

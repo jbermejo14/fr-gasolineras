@@ -21,6 +21,7 @@ describe('historiquePageMeta', () => {
     assert.equal(buildHistoriquePath('france', 'france'), '/historique');
     assert.equal(buildHistoriquePath('region', 'bretagne'), '/historique/region/bretagne');
     assert.equal(buildHistoriquePath('departement', 'morbihan'), '/historique/departement/morbihan');
+    assert.equal(buildHistoriquePath('marque', 'totalenergies'), '/historique/marque/totalenergies');
   });
 
   it('títulos por tipo de zona', () => {
@@ -33,6 +34,7 @@ describe('historiquePageMeta', () => {
       buildHistoriqueTitle('region', 'Grand Est', WEEKS),
       'Évolution du prix des carburants dans le Grand Est depuis 2016',
     );
+    assert.equal(buildHistoriqueTitle('marque', 'TotalEnergies', WEEKS), 'Évolution du prix des carburants chez TotalEnergies depuis 2016');
     assert.equal(
       buildHistoriqueTitle('departement', 'Morbihan', WEEKS),
       'Prix historique des carburants dans le département du Morbihan depuis 2016',

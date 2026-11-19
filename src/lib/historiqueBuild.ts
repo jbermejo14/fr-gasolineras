@@ -1,4 +1,5 @@
 import type { AnnualStation, PriceRecord } from './annualArchive.ts';
+import { BRAND_GROUPS } from './brands.ts';
 import { DEPARTMENTS, REGIONS, departmentCodeFromPostalCode, findDepartmentByCode, findRegionByCode } from './geo.ts';
 import { HISTORY_FUELS, encodeDeltaSeries } from './historiqueFormat.ts';
 import type {
@@ -19,6 +20,8 @@ export type CarryState = Partial<Record<HistoryFuel, { maj: string; priceMilli: 
 export const HISTORY_STALE_DAYS = 30;
 
 const HISTORIQUE_BUILD_FORMAT_VERSION = 1;
+/** Versión 2 de YearResult: añade las zonas de marca; invalida la caché de la versión 1. */
+const HISTORIQUE_BUILD_YEAR_RESULT_VERSION = 2;
 const HISTORIQUE_BUILD_END_OF_DAY = 'T23:59:59';
 const HISTORIQUE_BUILD_DATE_LENGTH = 10;
 const HISTORIQUE_BUILD_MILLIS_PER_DAY = 86_400_000;
@@ -95,7 +98,7 @@ export function weeklyStationSeries(
 
 /** Resultado de un año, cacheado en data/historique/annees/{year}.json.gz. */
 export interface YearResult {
-  version: 1;
+  version: 2;
   year: number;
   /** Lunes de ese año (recortados por --hasta en el año final). */
   weeks: string[];
@@ -143,17 +146,26 @@ export class YearAccumulator {
   private readonly carryOut: Record<string, CarryState> = {};
   private readonly stationsByDepartment = new Map<string, StationPartitionFile['stations']>();
 
-  constructor(year: number, weeks: readonly string[], carryIn: Readonly<Record<string, CarryState>>) {
+  private readonly brandOfStation: (id: string) => string | null;
+
+  /** `brandOfStation` devuelve el slug de la red de una estación (o null); sin él no hay zonas de marca. */
+  constructor(
+    year: number,
+    weeks: readonly string[],
+    carryIn: Readonly<Record<string, CarryState>>,
+    brandOfStation: (id: string) => string | null = () => null
+  ) {
     this.year = year;
     this.weeks = [...weeks];
     this.carryIn = carryIn;
+    this.brandOfStation = brandOfStation;
   }
 
   addStation(station: AnnualStation): void {
     const { series, carryOut } = weeklyStationSeries(station.records, this.weeks, this.carryIn[station.id]);
     if (Object.keys(carryOut).length > 0) this.carryOut[station.id] = carryOut;
     const departmentCode = departmentCodeFromPostalCode(station.postalCode);
-    for (const key of this.areaKeysFor(departmentCode)) this.addToArea(key, series);
+    for (const key of this.areaKeysFor(departmentCode, station.id)) this.addToArea(key, series);
     if (departmentCode) this.addToPartition(departmentCode, station.id, series);
   }
 
@@ -171,7 +183,7 @@ export class YearAccumulator {
     return {
       partitions,
       result: {
-        version: HISTORIQUE_BUILD_FORMAT_VERSION,
+        version: HISTORIQUE_BUILD_YEAR_RESULT_VERSION,
         year: this.year,
         weeks: [...this.weeks],
         areas,
@@ -180,12 +192,14 @@ export class YearAccumulator {
     };
   }
 
-  private areaKeysFor(departmentCode: string | null): string[] {
+  private areaKeysFor(departmentCode: string | null, stationId: string): string[] {
     const keys = [historiqueBuildAreaKey('france', HISTORIQUE_BUILD_FRANCE_SLUG)];
     const department = departmentCode ? findDepartmentByCode(departmentCode) : null;
     const region = department ? findRegionByCode(department.regionCode) : null;
     if (region) keys.push(historiqueBuildAreaKey('region', region.slug));
     if (department) keys.push(historiqueBuildAreaKey('departement', department.slug));
+    const brandSlug = this.brandOfStation(stationId);
+    if (brandSlug) keys.push(historiqueBuildAreaKey('marque', brandSlug));
     return keys;
   }
 
@@ -271,11 +285,12 @@ function historiqueBuildAllEntries(): AreaIndexEntry[] {
         parentSlug: regionSlugByCode.get(department.regionCode),
       })
     ),
+    ...BRAND_GROUPS.map((brand): AreaIndexEntry => ({ kind: 'marque', slug: brand.slug, name: brand.name })),
   ];
 }
 
 /** Une los años (en orden) en el índice y los ficheros de zona. avg = Math.round(sum/count); count 0 → avg y min null. Zonas sin ningún dato se omiten.
- * Orden: France, regiones (orden de REGIONS), departamentos (orden de DEPARTMENTS). Nombres de geo.ts. */
+ * Orden: France, regiones (orden de REGIONS), departamentos (orden de DEPARTMENTS), redes (orden de BRAND_GROUPS). Nombres de geo.ts. */
 export function mergeYearResults(
   results: readonly YearResult[],
   generatedAt: string

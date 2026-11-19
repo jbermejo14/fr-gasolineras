@@ -7,13 +7,14 @@ export const HISTORY_FIRST_YEAR = 2016;
 export type PriceMilli = number;
 export type FuelSeries = (PriceMilli | null)[];
 
-export type AreaKind = 'france' | 'region' | 'departement';
+/** 'marque': red de estaciones (slug de BRAND_GROUPS), agregada por su enseña actual. */
+export type AreaKind = 'france' | 'region' | 'departement' | 'marque';
 export interface AreaFuelSeries {
   avg: FuelSeries;
   min: FuelSeries;
   count: number[];
 }
-/** slug: 'france', slug de región o slug de departamento. parentSlug: solo departamento, slug de su región. */
+/** slug: 'france', slug de región, de departamento o de red. parentSlug: solo departamento, slug de su región. */
 export interface AreaHistory {
   kind: AreaKind;
   slug: string;
