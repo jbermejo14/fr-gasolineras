@@ -27,7 +27,7 @@ test('las constantes apuntan al flujo oficial y a data/cache', () => {
 test('loadPrixSnapshot procesa la lista de registros del fichero', () => {
   const content = JSON.stringify({ downloadedAt: '2026-11-19T10:00:00.000Z', records: SAMPLE_RECORDS });
   withTempSnapshot(content, (file) => {
-    const snapshot = loadPrixSnapshot(file);
+    const snapshot = loadPrixSnapshot(file, path.join(path.dirname(file), 'ausente.csv'));
     assert.equal(snapshot.updatedAt, '2026-11-19T09:59:54+00:00');
     assert.equal(snapshot.stationsById.size, snapshot.stations.length);
     assert.ok(snapshot.departments.has('morbihan'));
@@ -49,4 +49,32 @@ test('loadPrixSnapshot falla si el fichero no tiene la lista records', () => {
   withTempSnapshot(JSON.stringify({ downloadedAt: '2026-11-19T10:00:00.000Z' }), (file) => {
     assert.throws(() => loadPrixSnapshot(file), /records.*npm run preparar-datos/);
   });
+});
+
+const NAMES_CSV = 'id_station_officiel,nom_normalise\n56580001,U\n40500002,Intermarché\n';
+
+test('loadPrixSnapshot incorpora los nombres del fichero indicado', () => {
+  const content = JSON.stringify({ downloadedAt: '2026-11-19T10:00:00.000Z', records: SAMPLE_RECORDS });
+  withTempSnapshot(content, (file) => {
+    const namesFile = path.join(path.dirname(file), 'enseignes.csv');
+    fs.writeFileSync(namesFile, NAMES_CSV);
+    const snapshot = loadPrixSnapshot(file, namesFile);
+    assert.equal(snapshot.stationsById.get('56580001')?.brandSlug, 'systeme-u');
+    assert.deepEqual([...snapshot.brands.keys()], ['intermarche', 'systeme-u']);
+  });
+});
+
+test('loadPrixSnapshot sin fichero de nombres carga la instantánea sin marcas', () => {
+  const content = JSON.stringify({ downloadedAt: '2026-11-19T10:00:00.000Z', records: SAMPLE_RECORDS });
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    withTempSnapshot(content, (file) => {
+      const snapshot = loadPrixSnapshot(file, path.join(path.dirname(file), 'ausente.csv'));
+      assert.equal(snapshot.brands.size, 0);
+      assert.equal(snapshot.stationsById.get('56580001')?.name, null);
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
 });

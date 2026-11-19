@@ -637,10 +637,10 @@ export function brandGroupOf(name: string | null): BrandGroup | null;
 | totalenergies | TotalEnergies | totalenergies, total access, total contact, total | null |
 | intermarche | Intermarché | intermarche | null |
 | carrefour | Carrefour | carrefour | `/logos/carrefour.webp` |
-| leclerc | E.Leclerc | leclerc | null |
-| avia | Avia | avia | null |
 | systeme-u | Système U | systeme u, super u, hyper u, station u, u express, la station u, u (solo si el nombre entero es « U ») | null |
+| leclerc | E.Leclerc | leclerc | null |
 | esso | Esso | esso | null |
+| avia | Avia | avia | null |
 | auchan | Auchan | auchan | null |
 | eni | Eni | eni, agip | null |
 | netto | Netto | netto | null |
@@ -650,8 +650,8 @@ export function brandGroupOf(name: string | null): BrandGroup | null;
 | shell | Shell | shell | `/logos/shell.webp` |
 | vito | Vito | vito | null |
 | match | Match | match | null |
-| spar | Spar | spar | null |
 | aire-c | Aire C | aire c | null |
+| spar | Spar | spar | null |
 | dats-24 | DATS 24 | dats 24 | null |
 
 Los logos que faltan se añaden después (fichero en `public/logos/` y su ruta en la tabla); hasta entonces se pinta un distintivo de texto.

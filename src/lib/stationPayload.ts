@@ -3,7 +3,7 @@ import type { PrixSnapshot, Station } from './prixCarburants.ts';
 /** Campos de una estación que necesitan el buscador, las tarjetas y el mapa. */
 export type LightStation = Pick<
   Station,
-  | 'id' | 'slug' | 'address' | 'postalCode' | 'city' | 'communeSlug' | 'department'
+  | 'id' | 'slug' | 'address' | 'name' | 'brandSlug' | 'postalCode' | 'city' | 'communeSlug' | 'department'
   | 'departmentSlug' | 'roadType' | 'lat' | 'lon' | 'prices'
 >;
 
@@ -18,6 +18,8 @@ export function toLightStation(station: Station): LightStation {
     id: station.id,
     slug: station.slug,
     address: station.address,
+    name: station.name,
+    brandSlug: station.brandSlug,
     postalCode: station.postalCode,
     city: station.city,
     communeSlug: station.communeSlug,

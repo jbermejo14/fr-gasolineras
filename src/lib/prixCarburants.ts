@@ -1,3 +1,4 @@
+import { BRAND_GROUPS, brandGroupOf } from './brands.ts';
 import { DEPARTMENTS, departmentCodeFromPostalCode, findDepartmentByCode, findRegionByCode, normalizePlaceText, slugify } from './geo.ts';
 import { FUEL_TYPES, emptyFuelPrices, parseValidPrice } from './fuels.ts';
 import type { FuelPrices, FuelType } from './fuels.ts';
@@ -18,6 +19,10 @@ export interface Station {
   /** slugify(`${city} ${address}`) recortado a PRIX_SLUG_MAX_LENGTH caracteres sin cortar palabra. */
   slug: string;
   address: string;
+  /** Nombre comercial de la fuente de nombres (B.2); null si no hay. */
+  name: string | null;
+  /** Slug de la red de BRAND_GROUPS a la que pertenece el nombre; null si ninguna. */
+  brandSlug: string | null;
   postalCode: string;
   city: string;
   communeSlug: string;
@@ -76,6 +81,8 @@ export interface PrixSnapshot {
   departments: Map<string, DepartmentGroup>;
   /** Clave `${departmentSlug}/${communeSlug}`. */
   communes: Map<string, CommuneGroup>;
+  /** Clave brandSlug; solo redes con alguna estación, en el orden de BRAND_GROUPS. */
+  brands: Map<string, Station[]>;
   nationalStats: FuelStatsByType;
 }
 
@@ -200,8 +207,15 @@ function prixParsePrices(
   return { prices, priceUpdatedAt };
 }
 
-/** Convierte un registro del flujo en Station; null si se descarta (ver ARCHITECTURE.md, F2). */
-export function normalizeStation(raw: Record<string, unknown>, updatedAt: string): Station | null {
+/**
+ * Convierte un registro del flujo en Station; null si se descarta (ver ARCHITECTURE.md, F2).
+ * `name` es el nombre comercial ya limpio (null si no hay); de él se deduce la red.
+ */
+export function normalizeStation(
+  raw: Record<string, unknown>,
+  updatedAt: string,
+  name: string | null = null,
+): Station | null {
   const id = prixAsString(raw.id);
   const rawCity = prixAsString(raw.ville);
   const coordinates = prixParseCoordinates(raw);
@@ -220,6 +234,8 @@ export function normalizeStation(raw: Record<string, unknown>, updatedAt: string
     id,
     slug: prixTruncateSlug(slugify(`${city} ${address}`)),
     address,
+    name,
+    brandSlug: brandGroupOf(name)?.slug ?? null,
     postalCode,
     city,
     communeSlug,
@@ -341,12 +357,31 @@ function prixBuildDepartments(stations: readonly Station[]): {
   return { departments, communes };
 }
 
-/** Normaliza el flujo completo y lo agrega por departamento, municipio y país. */
-export function processRawPrixData(raw: readonly Record<string, unknown>[]): PrixSnapshot {
+function prixBuildBrands(stations: readonly Station[]): Map<string, Station[]> {
+  const byBrand = prixGroupBy(
+    stations.filter((station) => station.brandSlug !== null),
+    (station) => station.brandSlug as string,
+  );
+  const brands = new Map<string, Station[]>();
+  for (const group of BRAND_GROUPS) {
+    const brandStations = byBrand.get(group.slug);
+    if (brandStations) brands.set(group.slug, brandStations);
+  }
+  return brands;
+}
+
+/**
+ * Normaliza el flujo completo y lo agrega por departamento, municipio, red y país.
+ * `names` asocia id de estación → nombre comercial limpio (vacío si no hay fuente de nombres).
+ */
+export function processRawPrixData(
+  raw: readonly Record<string, unknown>[],
+  names: ReadonlyMap<string, string> = new Map(),
+): PrixSnapshot {
   const updatedAt = prixLatestUpdate(raw);
   const stations: Station[] = [];
   for (const record of raw) {
-    const station = normalizeStation(record, updatedAt);
+    const station = normalizeStation(record, updatedAt, names.get(prixAsString(record.id) ?? '') ?? null);
     if (station) stations.push(station);
   }
   return {
@@ -354,6 +389,7 @@ export function processRawPrixData(raw: readonly Record<string, unknown>[]): Pri
     stations,
     stationsById: new Map(stations.map((station) => [station.id, station])),
     ...prixBuildDepartments(stations),
+    brands: prixBuildBrands(stations),
     nationalStats: computeFuelStats(stations),
   };
 }
@@ -379,4 +415,9 @@ export function stationPath(station: Pick<Station, 'id' | 'slug'>): string {
 /** Id de la estación a partir del parámetro de ruta ('56580001-brehan-…' → '56580001'); null si no empieza por un id. */
 export function parseStationPathSlug(slug: string): string | null {
   return PRIX_STATION_SLUG_PATTERN.exec(slug)?.[1] ?? null;
+}
+
+/** Nombre para mostrar de una estación: el nombre comercial si existe; si no, la dirección. */
+export function stationDisplayName(station: Pick<Station, 'name' | 'address'>): string {
+  return station.name ?? station.address;
 }

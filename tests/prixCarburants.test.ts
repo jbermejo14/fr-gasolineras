@@ -9,6 +9,7 @@ import {
   normalizeStation,
   parseStationPathSlug,
   processRawPrixData,
+  stationDisplayName,
   stationPath,
   summarizeStations,
 } from '../src/lib/prixCarburants.ts';
@@ -253,4 +254,40 @@ test('stationPath y parseStationPathSlug son inversos', () => {
   assert.equal(parseStationPathSlug('12'), '12');
   assert.equal(parseStationPathSlug('brehan-16'), null);
   assert.equal(parseStationPathSlug(''), null);
+});
+
+test('processRawPrixData sin nombres deja name y brandSlug a null y brands vacío', () => {
+  assert.equal(station('56580001').name, null);
+  assert.equal(station('56580001').brandSlug, null);
+  assert.equal(snapshot.brands.size, 0);
+});
+
+const NAMES = new Map([
+  ['56580001', 'U'],
+  ['40500002', 'Intermarché'],
+  ['34150003', 'Intermarché'],
+  ['5100009', 'E.Leclerc'],
+  ['89100001', 'Carrefour'],
+  ['58240003', 'Port de Bandol'],
+]);
+const namedSnapshot = processRawPrixData(RAW, NAMES);
+
+test('processRawPrixData asigna nombre y red por id', () => {
+  const brehan = namedSnapshot.stationsById.get('56580001');
+  assert.equal(brehan?.name, 'U');
+  assert.equal(brehan?.brandSlug, 'systeme-u');
+  const bandol = namedSnapshot.stationsById.get('58240003');
+  assert.equal(bandol?.name, 'Port de Bandol');
+  assert.equal(bandol?.brandSlug, null);
+  assert.equal(namedSnapshot.stationsById.get('13560002')?.name, null);
+});
+
+test('brands agrupa solo redes presentes, en el orden de BRAND_GROUPS', () => {
+  assert.deepEqual([...namedSnapshot.brands.keys()], ['intermarche', 'carrefour', 'systeme-u', 'leclerc']);
+  assert.deepEqual(namedSnapshot.brands.get('intermarche')?.map((s) => s.id), ['40500002', '34150003']);
+});
+
+test('stationDisplayName usa el nombre y, sin él, la dirección', () => {
+  assert.equal(stationDisplayName(namedSnapshot.stationsById.get('89100001') as Station), 'Carrefour');
+  assert.equal(stationDisplayName(station('56580001')), '16 Rue Chateaubriand');
 });

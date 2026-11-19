@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { processRawPrixData } from './prixCarburants.ts';
 import type { PrixSnapshot } from './prixCarburants.ts';
+import { loadStationNames } from './stationNames.ts';
 
 export const PRIX_SOURCE_URL =
   'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json';
@@ -89,10 +90,11 @@ function prixParseSnapshotFile(file: string): Partial<PrixSnapshotFile> {
 }
 
 /**
- * Lee la instantánea y la procesa con processRawPrixData.
+ * Lee la instantánea y la procesa con processRawPrixData, junto con los nombres de `namesFile`
+ * (por defecto data/cache/enseignes.csv; si falta, la instantánea se procesa sin marcas).
  * Lanza Error si el fichero falta o no es una instantánea válida.
  */
-export function loadPrixSnapshot(file: string = PRIX_SNAPSHOT_FILE): PrixSnapshot {
+export function loadPrixSnapshot(file: string = PRIX_SNAPSHOT_FILE, namesFile?: string): PrixSnapshot {
   if (!fs.existsSync(file)) {
     throw new Error(`No existe la instantánea de precios (${file}): ${PRIX_RERUN_HINT}.`);
   }
@@ -100,7 +102,7 @@ export function loadPrixSnapshot(file: string = PRIX_SNAPSHOT_FILE): PrixSnapsho
   if (!Array.isArray(content.records)) {
     throw new Error(`La instantánea de precios (${file}) no tiene la lista "records": ${PRIX_RERUN_HINT}.`);
   }
-  return processRawPrixData(content.records);
+  return processRawPrixData(content.records, loadStationNames(namesFile));
 }
 
 let prixSnapshotCache: PrixSnapshot | null = null;

@@ -8,13 +8,13 @@ import { buildStationsPayload, toLightStation } from '../src/lib/stationPayload.
 
 const SAMPLE_FILE = path.join(import.meta.dirname, 'fixtures', 'prix-sample.json');
 const EXPECTED_KEYS = [
-  'id', 'slug', 'address', 'postalCode', 'city', 'communeSlug', 'department',
+  'id', 'slug', 'address', 'name', 'brandSlug', 'postalCode', 'city', 'communeSlug', 'department',
   'departmentSlug', 'roadType', 'lat', 'lon', 'prices',
 ].sort();
 
 const snapshot = processRawPrixData(JSON.parse(fs.readFileSync(SAMPLE_FILE, 'utf8')));
 
-test('toLightStation devuelve exactamente las 12 claves', () => {
+test('toLightStation devuelve exactamente las 14 claves', () => {
   const result = toLightStation(snapshot.stations[0]);
   assert.deepEqual(Object.keys(result).sort(), EXPECTED_KEYS);
 });
@@ -25,6 +25,13 @@ test('toLightStation copia cada valor de su campo', () => {
   for (const key of EXPECTED_KEYS) {
     assert.deepEqual(result[key as keyof typeof result], full[key as keyof Station], key);
   }
+});
+
+test('toLightStation copia name y brandSlug de una estación con nombre', () => {
+  const named = { ...snapshot.stations[0], name: 'Total Access', brandSlug: 'totalenergies' };
+  const result = toLightStation(named);
+  assert.equal(result.name, 'Total Access');
+  assert.equal(result.brandSlug, 'totalenergies');
 });
 
 test('toLightStation no filtra campos pesados como horarios o servicios', () => {

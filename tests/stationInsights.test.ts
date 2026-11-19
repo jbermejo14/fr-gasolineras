@@ -33,6 +33,8 @@ function makeStation(id: string, prices: Partial<FuelPrices>, northKm = 0, city 
   return {
     id,
     slug: `est-${id}`,
+    name: null,
+    brandSlug: null,
     address: '16 Rue Chateaubriand',
     postalCode: '56580',
     city,

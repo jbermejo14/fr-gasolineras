@@ -31,6 +31,8 @@ function makeStation(id: string, overrides: Partial<LightStation> = {}): LightSt
   return {
     id,
     slug: `slug-${id}`,
+    name: null,
+    brandSlug: null,
     address: '1 rue de Rivoli',
     postalCode: '75001',
     city: 'Paris',
