@@ -8,11 +8,10 @@ import {
   type PrixSnapshot,
   type Station,
 } from '@/lib/prixCarburants';
-import { formatPrice } from '@/lib/format';
 import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import { getBreadcrumbSchema, getGasStationSchema } from '@/lib/seo';
 import { nearbyStations, savingsReferences, stationSummary } from '@/lib/stationInsights';
-import { stationHeading } from '@/lib/stationHeading';
+import { buildStationDescription, buildStationTitle } from '@/lib/pageTitles';
 import { toLightStation } from '@/lib/stationPayload';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -47,27 +46,14 @@ function findStation(data: PrixSnapshot, slug: string): Station | null {
   return id === null ? null : (data.stationsById.get(id) ?? null);
 }
 
-function stationMetaDescription(station: Station): string {
-  const { gazole, e10 } = station.prices;
-  return [
-    `Prix des carburants à la station-service ${station.address}, ${station.postalCode} ${station.city}.`,
-    gazole !== null ? `Gazole : ${formatPrice(gazole)}.` : '',
-    e10 !== null ? `SP95-E10 : ${formatPrice(e10)}.` : '',
-    station.is24h ? 'Automate 24/24.' : '',
-    'Horaires, services et itinéraire.',
-  ]
-    .filter(Boolean)
-    .join(' ');
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const station = findStation(await getPrixData(), slug);
   if (!station) return NOT_FOUND_METADATA;
 
   const canonical = absoluteUrl(stationPath(station));
-  const title = `${stationHeading(station)} : prix des carburants aujourd'hui`;
-  const description = stationMetaDescription(station);
+  const title = buildStationTitle(station);
+  const description = buildStationDescription(station);
 
   return {
     title,

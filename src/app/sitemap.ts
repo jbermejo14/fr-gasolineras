@@ -12,10 +12,8 @@ const SITEMAP_DEPARTMENT_PRIORITY = 0.9;
 const SITEMAP_BRAND_PRIORITY = 0.8;
 const SITEMAP_COMMUNE_PRIORITY = 0.8;
 const SITEMAP_STATION_PRIORITY = 0.6;
-const SITEMAP_LEGAL_PRIORITY = 0.2;
 const SITEMAP_HISTORIQUE_FRANCE_PRIORITY = 0.7;
 const SITEMAP_HISTORIQUE_AREA_PRIORITY = 0.6;
-const LEGAL_PATHS = ['/mentions-legales', '/confidentialite', '/cookies'] as const;
 
 /** URLs del histórico desde el índice; vacío si todavía no se ha generado. lastModified = última semana. */
 function historiqueSitemapEntries(): MetadataRoute.Sitemap {
@@ -40,15 +38,6 @@ function brandSitemapEntries(brandSlugs: readonly string[], lastModified: Date):
   };
   const brands = brandSlugs.map((slug) => ({ ...index, url: absoluteUrl(`/marque/${slug}`) }));
   return [index, ...brands];
-}
-
-function legalSitemapEntries(lastModified: Date): MetadataRoute.Sitemap {
-  return LEGAL_PATHS.map((path) => ({
-    url: absoluteUrl(path),
-    lastModified,
-    changeFrequency: 'yearly',
-    priority: SITEMAP_LEGAL_PRIORITY,
-  }));
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -88,6 +77,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  entries.push(...legalSitemapEntries(lastModified), ...historiqueSitemapEntries());
+  entries.push(...historiqueSitemapEntries());
   return entries;
 }

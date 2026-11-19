@@ -722,3 +722,20 @@ Cambios en los datos:
 
 - Unas 40 páginas más (índice, ~19 marcas y su histórico): unos 17 900 ficheros por despliegue.
 - Nombres de OpenStreetMap: puede haber errores puntuales; la fuente acepta correcciones en carburants.chiffrex.fr.
+
+---
+
+# Parte S — Títulos y metadatos SEO
+
+Los títulos y descripciones de las páginas se construyen con funciones puras en `src/lib/pageTitles.ts` (probadas en `tests/pageTitles.test.ts`, que recorre todas las estaciones, municipios, departamentos, marcas y zonas del histórico reales).
+
+Regla:
+
+- El título completo, con el sufijo « | Ododex » que añade `title.template` de `src/app/layout.tsx` (9 caracteres), mide como máximo **65 caracteres** (`TITLE_MAX_LENGTH`); el cuerpo, 56 (`TITLE_BODY_MAX_LENGTH`). Se apunta a 60.
+- La palabra clave principal va al principio (« Prix des carburants… », « Stations les moins chères… », « Station-service… ») y el nombre de la ciudad o de la estación, pronto.
+- Cada función prueba candidatos de más a menos completos y elige el primero que cabe. Si una parte variable (dirección, nombre) sigue sin caber, se recorta por palabras, sin « … », sin dejar conectores (« de », « du »…) colgando; la ciudad no se recorta.
+- Las descripciones miden de 120 a 160 caracteres (`DESCRIPTION_MIN_LENGTH`, `DESCRIPTION_MAX_LENGTH`), con cifras (número de estaciones, precios) y se completan con frases opcionales mientras quepan.
+- El H1 no cambia (`stationHeading` y compañía) y puede ser largo.
+- La gramática de lugares se mantiene (`elideA`, `departmentOfName`, `regionInName`, « chez »).
+- El sitemap solo incluye páginas indexables: las legales (`/mentions-legales`, `/confidentialite`, `/cookies`) son `noindex` y no aparecen.
+- Los títulos del histórico los acorta `buildHistoriqueSeoMetadata` sobre los metadatos de `historiquePageMeta.ts`, que conserva su título largo.

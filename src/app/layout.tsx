@@ -7,6 +7,7 @@ import { SITE_NAME, absoluteUrl, getSiteUrl } from '@/lib/site';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getPrixData } from '@/lib/prixSnapshot';
+import { HOME_TITLE, buildHomeDescription, buildHomeTitle } from '@/lib/pageTitles';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -58,15 +59,19 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const homeUrl = absoluteUrl('/');
+  const data = await getPrixData();
+  const description = buildHomeDescription({
+    stationCount: data.stations.length,
+    averageGazole: data.nationalStats.gazole.avg,
+  });
 
   return {
     metadataBase: new URL(getSiteUrl()),
     title: {
-      default: `Prix des carburants aujourd'hui en France : stations-service les moins chères | ${SITE_NAME}`,
+      default: buildHomeTitle(),
       template: `%s | ${SITE_NAME}`,
     },
-    description:
-      "Comparez le prix du gazole, du SP95-E10, du SP98, de l'E85 et du GPLc dans toutes les stations-service de France, avec les données officielles du Ministère de l'Économie mises à jour chaque jour.",
+    description,
     alternates: {
       canonical: homeUrl,
     },
@@ -75,9 +80,8 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'fr_FR',
       url: homeUrl,
       siteName: SITE_NAME,
-      title: "Prix des carburants en France aujourd'hui",
-      description:
-        'Trouvez les stations-service les moins chères par département, commune et code postal, à partir des données officielles de prix-carburants.gouv.fr.',
+      title: HOME_TITLE,
+      description,
       images: [
         {
           url: `${getSiteUrl()}/brand/ododex-og.png`,
@@ -89,9 +93,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: "Prix des carburants en France aujourd'hui",
-      description:
-        'Trouvez les stations-service les moins chères par département, commune et code postal, à partir des données officielles de prix-carburants.gouv.fr.',
+      title: HOME_TITLE,
+      description,
       images: [`${getSiteUrl()}/brand/ododex-og.png`],
     },
     robots: {

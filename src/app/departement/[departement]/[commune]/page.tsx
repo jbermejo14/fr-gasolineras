@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPrixData } from '@/lib/prixSnapshot';
 import { summarizeStations } from '@/lib/prixCarburants';
-import { formatPrice } from '@/lib/format';
 import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import { getBreadcrumbSchema } from '@/lib/seo';
-import { nearbyCommunes, sortStationsByPrice, stationCountLabel, elideA } from '@/lib/stationInsights';
+import { nearbyCommunes, sortStationsByPrice, elideA } from '@/lib/stationInsights';
+import { buildCommuneDescription, buildCommuneTitle } from '@/lib/pageTitles';
 import { toLightStation } from '@/lib/stationPayload';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -48,10 +48,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const summary = summarizeStations(group.stations);
-  const minGazole = summary.min.gazole !== null ? ` Gazole dès ${formatPrice(summary.min.gazole)}.` : '';
-  const minE10 = summary.min.e10 !== null ? ` SP95-E10 dès ${formatPrice(summary.min.e10)}.` : '';
-  const title = `Stations-service les moins chères ${elideA(group.city)} (${department.code}) : prix du jour`;
-  const description = `Comparez ${stationCountLabel(group.stations.length)}-service ${elideA(group.city)} (${group.department}) avec les prix officiels.${minGazole}${minE10}`;
+  const title = buildCommuneTitle({ city: group.city, departmentCode: department.code });
+  const description = buildCommuneDescription({
+    city: group.city,
+    department: group.department,
+    stationCount: group.stations.length,
+    minGazole: summary.min.gazole,
+    minE10: summary.min.e10,
+  });
   const canonical = absoluteUrl(communePath(departement, commune));
 
   return {

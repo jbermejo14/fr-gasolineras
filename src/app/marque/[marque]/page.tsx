@@ -4,10 +4,9 @@ import { getPrixData } from '@/lib/prixSnapshot';
 import { findBrandGroupBySlug } from '@/lib/brands';
 import { summarizeBrandDepartments } from '@/lib/brandInsights';
 import { summarizeStations } from '@/lib/prixCarburants';
-import { formatPrice } from '@/lib/format';
 import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import { getBreadcrumbSchema } from '@/lib/seo';
-import { stationCountLabel } from '@/lib/stationInsights';
+import { buildBrandDescription, buildBrandTitle } from '@/lib/pageTitles';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BrandHero } from '@/components/BrandHero';
@@ -42,11 +41,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const summary = summarizeStations(stations);
-  const averageGazole = summary.avg.gazole !== null ? ` : gazole à ${formatPrice(summary.avg.gazole)} en moyenne` : '';
-  const minGazole = summary.min.gazole !== null ? ` Gazole dès ${formatPrice(summary.min.gazole)}.` : '';
-  const minE10 = summary.min.e10 !== null ? ` SP95-E10 dès ${formatPrice(summary.min.e10)}.` : '';
-  const title = `Prix des carburants chez ${group.name}${averageGazole}`;
-  const description = `Comparez les prix de ${stationCountLabel(stations.length)} ${group.name} en France.${minGazole}${minE10} Détail par département.`;
+  const title = buildBrandTitle({ name: group.name, averageGazole: summary.avg.gazole });
+  const description = buildBrandDescription({
+    name: group.name,
+    stationCount: stations.length,
+    minGazole: summary.min.gazole,
+    minE10: summary.min.e10,
+  });
   const canonical = absoluteUrl(brandPath(marque));
 
   return {

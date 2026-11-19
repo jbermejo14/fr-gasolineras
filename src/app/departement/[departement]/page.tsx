@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPrixData } from '@/lib/prixSnapshot';
-import { departmentOfName, findRegionBySlug } from '@/lib/geo';
+import { findRegionBySlug } from '@/lib/geo';
 import { summarizeStations } from '@/lib/prixCarburants';
-import { formatPrice } from '@/lib/format';
 import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import { getBreadcrumbSchema } from '@/lib/seo';
-import { stationCountLabel } from '@/lib/stationInsights';
+import { buildDepartmentDescription, buildDepartmentTitle } from '@/lib/pageTitles';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { DepartmentHero } from '@/components/DepartmentHero';
@@ -41,11 +40,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const summary = summarizeStations(group.stations);
-  const averageGazole = summary.avg.gazole !== null ? ` : gazole à ${formatPrice(summary.avg.gazole)} en moyenne` : '';
-  const minGazole = summary.min.gazole !== null ? ` Gazole dès ${formatPrice(summary.min.gazole)}.` : '';
-  const minE10 = summary.min.e10 !== null ? ` SP95-E10 dès ${formatPrice(summary.min.e10)}.` : '';
-  const title = `Prix des carburants dans le département ${departmentOfName(group.department)} (${group.code})${averageGazole}`;
-  const description = `Comparez les prix de ${stationCountLabel(group.stations.length)}-service dans le département ${departmentOfName(group.department)} (${group.code}).${minGazole}${minE10} Détail par commune.`;
+  const title = buildDepartmentTitle({ name: group.department, code: group.code, averageGazole: summary.avg.gazole });
+  const description = buildDepartmentDescription({
+    name: group.department,
+    code: group.code,
+    stationCount: group.stations.length,
+    minGazole: summary.min.gazole,
+    minE10: summary.min.e10,
+  });
   const canonical = absoluteUrl(departmentPath(departement));
 
   return {

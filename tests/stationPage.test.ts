@@ -66,10 +66,10 @@ test('brandBadgeSpec: logo, texto de la red, texto del nombre o nada', () => {
   assert.deepEqual(brandBadgeSpec('Garage Denis', null), { kind: 'text', label: 'Garage Denis' });
 });
 
-test('la ficha usa stationHeading y enlaza la página de la red', () => {
+test('la ficha usa buildStationTitle para el título, stationHeading para el H1 y enlaza la página de la red', () => {
   const page = fs.readFileSync(PAGE_PATH, 'utf8');
   const hero = fs.readFileSync(path.join(SOURCE_DIR, 'components', 'StationHero.tsx'), 'utf8');
-  assert.ok(page.includes('stationHeading(station)'));
+  assert.ok(page.includes('buildStationTitle(station)'));
   assert.ok(hero.includes('{stationHeading(station)}'));
   assert.ok(hero.includes('/marque/${brand.slug}'));
   assert.ok(hero.includes('Toutes les stations {brand.name}'));

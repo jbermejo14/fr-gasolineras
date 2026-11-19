@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getHistoriqueStaticParams, renderHistoriqueAreaPage } from '@/components/HistoriqueAreaPage';
-import { buildHistoriqueMetadata } from '@/lib/historiquePageMeta';
+import { buildHistoriqueSeoMetadata } from '@/lib/pageTitles';
 
 export const dynamic = 'force-static';
 export const dynamicParams = false;
@@ -15,7 +15,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { marque } = await params;
-  return buildHistoriqueMetadata('marque', marque);
+  return buildHistoriqueSeoMetadata('marque', marque);
 }
 
 export default async function HistoriqueMarquePage({ params }: PageProps) {
