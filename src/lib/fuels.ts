@@ -4,6 +4,8 @@ export type FuelType = (typeof FUEL_TYPES)[number];
 export type FuelPrices = Record<FuelType, number | null>;
 
 export const DEFAULT_FUEL: FuelType = 'gazole';
+/** Litros de un depósito de referencia para comparar costes. */
+export const TANK_LITERS = 50;
 
 export const FUEL_LABELS: Record<FuelType, string> = {
   gazole: 'Gazole',
