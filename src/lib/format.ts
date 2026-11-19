@@ -5,7 +5,7 @@ const EURO_DECIMALS = 2;
 const KM_DECIMALS = 1;
 const MIN_KM_SHOWN = 0.1;
 // Espacio no separable entre cifra y unidad: en francés la unidad no debe quedar sola en otra línea.
-const UNIT_SPACE = "00A0";
+const UNIT_SPACE = " ";
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function formatFixedDecimals(decimals: number): Intl.NumberFormat {

@@ -13,20 +13,20 @@ import {
 const THIN_NBSP = ' ';
 
 test('formatPrice y formatPricePerLiter usan 3 decimales y coma', () => {
-  assert.equal(formatPrice(2.109), '2,10900A0€');
-  assert.equal(formatPrice(2), '2,00000A0€');
-  assert.equal(formatPricePerLiter(2.109), '2,10900A0€/l');
+  assert.equal(formatPrice(2.109), '2,109 €');
+  assert.equal(formatPrice(2), '2,000 €');
+  assert.equal(formatPricePerLiter(2.109), '2,109 €/l');
 });
 
 test('formatEuros usa 2 decimales', () => {
-  assert.equal(formatEuros(4.5), '4,5000A0€');
-  assert.equal(formatEuros(0), '0,0000A0€');
+  assert.equal(formatEuros(4.5), '4,50 €');
+  assert.equal(formatEuros(0), '0,00 €');
 });
 
 test('formatKm', () => {
-  assert.equal(formatKm(0.05), 'moins de 10000A0m');
-  assert.equal(formatKm(0.1), '0,100A0km');
-  assert.equal(formatKm(3.44), '3,400A0km');
+  assert.equal(formatKm(0.05), 'moins de 100 m');
+  assert.equal(formatKm(0.1), '0,1 km');
+  assert.equal(formatKm(3.44), '3,4 km');
 });
 
 test('formatDateTimeParis en invierno y verano', () => {
