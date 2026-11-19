@@ -1,3 +1,4 @@
+import { departmentOfName } from '@/lib/geo';
 import { FUEL_LABELS, FUEL_TYPES } from '@/lib/fuels';
 import type { DepartmentGroup, FuelStatsByType } from '@/lib/prixCarburants';
 import { summarizeStations } from '@/lib/prixCarburants';
@@ -15,7 +16,7 @@ export function DepartmentFuelComparison({ group, national }: DepartmentFuelComp
   return (
     <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] p-4 md:p-6 shadow-sm space-y-4">
       <h2 className="text-lg md:text-xl font-extrabold text-[var(--text-main)]">
-        Prix moyens dans le département {group.department} et en France
+        Prix moyens dans le département {departmentOfName(group.department)} et en France
       </h2>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">

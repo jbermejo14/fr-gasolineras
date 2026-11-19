@@ -1,3 +1,4 @@
+import { departmentOfName } from '@/lib/geo';
 import { Building2 } from 'lucide-react';
 import { InternalLink } from '@/components/InternalLink';
 import type { DepartmentGroup } from '@/lib/prixCarburants';
@@ -15,7 +16,7 @@ export function DepartmentCommunes({ group }: { group: DepartmentGroup }) {
         <div>
           <h2 className="text-lg md:text-xl font-extrabold text-[var(--text-main)] flex items-center gap-2">
             <Building2 className="w-5 h-5 text-[var(--orange-primary)]" />
-            <span>Communes avec stations-service dans le département {group.department}</span>
+            <span>Communes avec stations-service dans le département {departmentOfName(group.department)}</span>
           </h2>
           <p className="text-xs text-[var(--text-muted)] mt-1">
             Cliquez sur une commune pour voir le détail des prix, la carte et les stations les moins chères.

@@ -1,7 +1,13 @@
+/** Preposición que introduce una región: « en Bretagne », « dans le Grand Est », « dans les Hauts-de-France ». */
+export type RegionPreposition = 'en' | 'dans le' | 'dans les';
+/** Artículo del nombre de un departamento: le Morbihan, la Gironde, l'Ain, les Landes; '' para Paris. */
+export type DepartmentArticle = 'le' | 'la' | "l'" | 'les' | '';
+
 export interface Region {
   code: string;
   name: string;
   slug: string;
+  inPhrase: RegionPreposition;
 }
 
 export interface Department {
@@ -9,6 +15,7 @@ export interface Department {
   name: string;
   slug: string;
   regionCode: string;
+  article: DepartmentArticle;
 }
 
 const POSTAL_CODE_PATTERN = /^\d{5}$/;
@@ -54,12 +61,36 @@ const REGION_ROWS: readonly (readonly [string, string])[] = [
   ['94', 'Corse'],
 ];
 
+/** Regiones cuyo nombre no admite « en »: Grand Est (masculino) y las de nombre plural. */
+const REGION_PREPOSITIONS: Readonly<Record<string, RegionPreposition>> = {
+  '44': 'dans le',
+  '32': 'dans les',
+  '52': 'dans les',
+};
+
 /** Las 13 regiones de Francia metropolitana (códigos INSEE), en este orden. */
 export const REGIONS: readonly Region[] = REGION_ROWS.map(([code, name]) => ({
   code,
   name,
   slug: slugify(name),
+  inPhrase: REGION_PREPOSITIONS[code] ?? 'en',
 }));
+
+// Artículo de cada departamento (uso de Wikipédia FR: « département du/de la/de l'/des … »).
+const DEPARTMENT_ARTICLES: Readonly<Record<string, DepartmentArticle>> = {
+  '01': "l'", '02': "l'", '03': "l'", '04': 'les', '05': 'les', '06': 'les', '07': "l'", '08': 'les',
+  '09': "l'", '10': "l'", '11': "l'", '12': "l'", '13': 'les', '14': 'le', '15': 'le', '16': 'la',
+  '17': 'la', '18': 'le', '19': 'la', '21': 'la', '22': 'les', '23': 'la', '24': 'la', '25': 'le',
+  '26': 'la', '27': "l'", '28': "l'", '29': 'le', '2A': 'la', '2B': 'la', '30': 'le', '31': 'la',
+  '32': 'le', '33': 'la', '34': "l'", '35': "l'", '36': "l'", '37': "l'", '38': "l'", '39': 'le',
+  '40': 'les', '41': 'le', '42': 'la', '43': 'la', '44': 'la', '45': 'le', '46': 'le', '47': 'le',
+  '48': 'la', '49': 'le', '50': 'la', '51': 'la', '52': 'la', '53': 'la', '54': 'la', '55': 'la',
+  '56': 'le', '57': 'la', '58': 'la', '59': 'le', '60': "l'", '61': "l'", '62': 'le', '63': 'le',
+  '64': 'les', '65': 'les', '66': 'les', '67': 'le', '68': 'le', '69': 'le', '70': 'la', '71': 'la',
+  '72': 'la', '73': 'la', '74': 'la', '75': '', '76': 'la', '77': 'la', '78': 'les', '79': 'les',
+  '80': 'la', '81': 'le', '82': 'le', '83': 'le', '84': 'le', '85': 'la', '86': 'la', '87': 'la',
+  '88': 'les', '89': "l'", '90': 'le', '91': "l'", '92': 'les', '93': 'la', '94': 'le', '95': 'le',
+};
 
 // Código, nombre oficial y región (división de 2016, la que usa el flujo de datos).
 const DEPARTMENT_ROWS: readonly (readonly [string, string, string])[] = [
@@ -99,8 +130,45 @@ const DEPARTMENT_ROWS: readonly (readonly [string, string, string])[] = [
 
 /** Los 96 departamentos metropolitanos (01–95 con 2A y 2B, sin 20), ordenados por código. */
 export const DEPARTMENTS: readonly Department[] = DEPARTMENT_ROWS.map(
-  ([code, name, regionCode]) => ({ code, name, slug: slugify(name), regionCode }),
+  ([code, name, regionCode]) => ({
+    code,
+    name,
+    slug: slugify(name),
+    regionCode,
+    article: DEPARTMENT_ARTICLES[code],
+  }),
 );
+
+const ARTICLE_TO_DE: Readonly<Record<DepartmentArticle, string>> = {
+  le: 'du ',
+  la: 'de la ',
+  "l'": "de l'",
+  les: 'des ',
+  '': 'de ',
+};
+
+/** Complemento « de » de un departamento: « du Morbihan », « de la Gironde », « de l'Ain », « des Landes », « de Paris ». */
+export function departmentOf(department: Pick<Department, 'name' | 'article'>): string {
+  return `${ARTICLE_TO_DE[department.article]}${department.name}`;
+}
+
+/** Como `departmentOf`, a partir del nombre oficial; si no es un departamento conocido, « de {nombre} ». */
+export function departmentOfName(name: string): string {
+  const department = DEPARTMENTS.find((entry) => entry.name === name);
+  return department ? departmentOf(department) : `de ${name}`;
+}
+
+/** Región con su preposición: « en Bretagne », « dans le Grand Est »; con `capitalized`, « Dans le Grand Est » (inicio de frase). */
+export function regionIn(region: Pick<Region, 'name' | 'inPhrase'>, capitalized = false): string {
+  const text = `${region.inPhrase} ${region.name}`;
+  return capitalized ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : text;
+}
+
+/** Como `regionIn`, a partir del nombre oficial; si no es una región conocida, « en {nombre} ». */
+export function regionInName(name: string, capitalized = false): string {
+  const region = REGIONS.find((entry) => entry.name === name);
+  return regionIn(region ?? { name, inPhrase: 'en' }, capitalized);
+}
 
 export function findRegionByCode(code: string): Region | null {
   return REGIONS.find((region) => region.code === code) ?? null;

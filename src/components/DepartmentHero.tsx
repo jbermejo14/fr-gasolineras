@@ -1,3 +1,4 @@
+import { departmentOfName } from '@/lib/geo';
 import { TrendingDown } from 'lucide-react';
 import { InternalLink } from '@/components/InternalLink';
 import { gasFinderTankSavings, GAS_FINDER_TANK_LITERS } from '@/components/GasFinderLogic';
@@ -24,7 +25,7 @@ function DepartmentIntro({ group, national }: Pick<DepartmentHeroProps, 'group' 
   return (
     <>
       <p className="mt-3 text-sm md:text-base text-[var(--text-muted)] leading-relaxed">
-        Le département <strong>{group.department}</strong> compte <strong>{stationCountLabel(group.stations.length)}</strong>{' '}
+        Le département <strong>{departmentOfName(group.department)}</strong> compte <strong>{stationCountLabel(group.stations.length)}</strong>{' '}
         réparties dans <strong>{communeCountLabel(group.communes.length)}</strong>. Le gazole y coûte en moyenne{' '}
         <strong>{formatPriceOrDash(summary.avg.gazole)}</strong> le litre (France : {formatPriceOrDash(national.gazole.avg)}) et
         le SP95-E10 <strong>{formatPriceOrDash(summary.avg.e10)}</strong> (France : {formatPriceOrDash(national.e10.avg)}).
@@ -84,7 +85,7 @@ export function DepartmentHero({ group, regionName, national }: DepartmentHeroPr
         </span>
         <h1 className="text-xl md:text-4xl font-extrabold tracking-tight break-words text-[var(--text-main)]">
           Prix des carburants dans le département{' '}
-          <span className="text-[var(--orange-primary)]">{group.department}</span> ({group.code})
+          <span className="text-[var(--orange-primary)]">{departmentOfName(group.department)}</span> ({group.code})
         </h1>
         <DepartmentIntro group={group} national={national} />
       </div>

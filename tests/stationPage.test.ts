@@ -7,7 +7,6 @@ import { parseStationPathSlug, stationPath } from '../src/lib/prixCarburants.ts'
 const SOURCE_DIR = path.join(import.meta.dirname, '..', 'src');
 const PAGE_PATH = path.join(SOURCE_DIR, 'app', 'station', '[slug]', 'page.tsx');
 const PRICES_PATH = path.join(SOURCE_DIR, 'components', 'StationPrices.tsx');
-const HISTORY_MARKER = '{/* Historique: lo inserta F6 */}';
 
 function readStationSources(): Array<{ file: string; source: string }> {
   const componentsDir = path.join(SOURCE_DIR, 'components');
@@ -30,11 +29,11 @@ test('la ficha y sus componentes no formatean importes con toFixed', () => {
   }
 });
 
-test('la ficha pasa los importes por formatEuros, usa SITE_NAME en openGraph y deja el hueco del histórico', () => {
+test('la ficha pasa los importes por formatEuros, usa SITE_NAME en openGraph y monta el histórico de la estación', () => {
   const page = fs.readFileSync(PAGE_PATH, 'utf8');
   assert.match(fs.readFileSync(PRICES_PATH, 'utf8'), /formatEuros\(price \* TANK_LITERS\)/);
   assert.match(page, /siteName: SITE_NAME/);
-  assert.ok(page.includes(HISTORY_MARKER), 'falta el comentario donde F6 inserta el histórico');
+  assert.match(page, /<StationHistory\b/, 'la ficha debe usar <StationHistory');
 });
 
 test('la ficha declara rutas estáticas cerradas y responde notFound a un slug desconocido', () => {

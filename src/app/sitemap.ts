@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { getPrixData } from '@/lib/prixSnapshot';
 import { stationPath } from '@/lib/prixCarburants';
 import { absoluteUrl } from '@/lib/site';
+import { getHistoryIndex } from '@/lib/historique';
+import { buildHistoriquePath } from '@/lib/historiquePageMeta';
 
 export const dynamic = 'force-static';
 
@@ -10,12 +12,21 @@ const SITEMAP_DEPARTMENT_PRIORITY = 0.9;
 const SITEMAP_COMMUNE_PRIORITY = 0.8;
 const SITEMAP_STATION_PRIORITY = 0.6;
 const SITEMAP_LEGAL_PRIORITY = 0.2;
+const SITEMAP_HISTORIQUE_FRANCE_PRIORITY = 0.7;
+const SITEMAP_HISTORIQUE_AREA_PRIORITY = 0.6;
 const LEGAL_PATHS = ['/mentions-legales', '/confidentialite', '/cookies'] as const;
 
-/** URLs del histórico de precios; vacío hasta que F6 las añada. */
+/** URLs del histórico desde el índice; vacío si todavía no se ha generado. lastModified = última semana. */
 function historiqueSitemapEntries(): MetadataRoute.Sitemap {
-  // Las URLs de /historique las completa F6, que lee el índice generado por `npm run historique`.
-  return [];
+  const index = getHistoryIndex();
+  if (!index) return [];
+  const lastModified = new Date(index.weeks[index.weeks.length - 1]);
+  return index.areas.map((area) => ({
+    url: absoluteUrl(buildHistoriquePath(area.kind, area.slug)),
+    lastModified,
+    changeFrequency: 'weekly',
+    priority: area.kind === 'france' ? SITEMAP_HISTORIQUE_FRANCE_PRIORITY : SITEMAP_HISTORIQUE_AREA_PRIORITY,
+  }));
 }
 
 function legalSitemapEntries(lastModified: Date): MetadataRoute.Sitemap {

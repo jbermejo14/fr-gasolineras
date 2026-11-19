@@ -1,3 +1,4 @@
+import { departmentOfName } from '@/lib/geo';
 import { Fuel } from 'lucide-react';
 import { StationCard } from '@/components/StationCard';
 import { FUEL_LABELS, type FuelType } from '@/lib/fuels';
@@ -23,7 +24,7 @@ export function DepartmentCheapest({ stations, fuel, departmentName }: Departmen
       <h2 className="text-lg md:text-xl font-extrabold text-[var(--text-main)] flex items-center gap-2">
         <Fuel className="w-5 h-5 text-[var(--orange-primary)]" />
         <span>
-          Les stations les moins chères pour le {FUEL_LABELS[fuel]} dans le département {departmentName}
+          Les stations les moins chères pour le {FUEL_LABELS[fuel]} dans le département {departmentOfName(departmentName)}
         </span>
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

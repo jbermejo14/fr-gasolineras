@@ -2,6 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEPARTMENTS,
+  departmentOf,
+  departmentOfName,
+  regionIn,
+  regionInName,
   REGIONS,
   departmentCodeFromPostalCode,
   findDepartmentByCode,
@@ -84,4 +88,45 @@ test('normalizePlaceText respeta texto mixto y colapsa espacios', () => {
   assert.equal(normalizePlaceText('Saint-Denis-lès-Bourg'), 'Saint-Denis-lès-Bourg');
   assert.equal(normalizePlaceText('  16 rue   Chateaubriand '), '16 rue Chateaubriand');
   assert.equal(normalizePlaceText(''), '');
+});
+
+test('departmentOf: artículo correcto en los casos conocidos', () => {
+  const of = (code: string) => departmentOf(findDepartmentByCode(code)!);
+  assert.equal(of('56'), 'du Morbihan');
+  assert.equal(of('33'), 'de la Gironde');
+  assert.equal(of('01'), "de l'Ain");
+  assert.equal(of('40'), 'des Landes');
+  assert.equal(of('34'), "de l'Hérault");
+  assert.equal(of('59'), 'du Nord');
+  assert.equal(of('92'), 'des Hauts-de-Seine');
+  assert.equal(of('93'), 'de la Seine-Saint-Denis');
+  assert.equal(of('2A'), 'de la Corse-du-Sud');
+  assert.equal(of('2B'), 'de la Haute-Corse');
+  assert.equal(of('90'), 'du Territoire de Belfort');
+  assert.equal(of('75'), 'de Paris');
+});
+
+test('departmentOf: los 96 departamentos son coherentes con su artículo', () => {
+  assert.equal(DEPARTMENTS.length, 96);
+  const vowelStart = /^[AEIOUYÂÉÈÊÎÔÛ]/;
+  for (const department of DEPARTMENTS) {
+    const text = departmentOf(department);
+    assert.ok(text.endsWith(department.name), text);
+    if (department.article === "l'") assert.ok(vowelStart.test(department.name) || department.name === 'Hérault', department.name);
+    else if (department.article === 'le' || department.article === 'la') assert.ok(!vowelStart.test(department.name), department.name);
+    assert.equal(departmentOfName(department.name), text);
+  }
+});
+
+test('regionIn: preposición de las 13 regiones', () => {
+  const byName = (name: string) => REGIONS.find((region) => region.name === name)!;
+  assert.equal(regionIn(byName('Bretagne')), 'en Bretagne');
+  assert.equal(regionIn(byName('Île-de-France')), 'en Île-de-France');
+  assert.equal(regionIn(byName('Grand Est')), 'dans le Grand Est');
+  assert.equal(regionIn(byName('Grand Est'), true), 'Dans le Grand Est');
+  assert.equal(regionIn(byName('Hauts-de-France')), 'dans les Hauts-de-France');
+  assert.equal(regionIn(byName('Pays de la Loire'), true), 'Dans les Pays de la Loire');
+  assert.equal(regionIn(byName('Corse'), true), 'En Corse');
+  assert.equal(REGIONS.length, 13);
+  for (const region of REGIONS) assert.equal(regionInName(region.name), regionIn(region));
 });

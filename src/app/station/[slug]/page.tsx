@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { MapPin } from 'lucide-react';
+import { LineChart, MapPin } from 'lucide-react';
 import { getPrixData } from '@/lib/prixSnapshot';
 import {
   parseStationPathSlug,
@@ -22,6 +22,7 @@ import { StationPrices } from '@/components/StationPrices';
 import { StationHours } from '@/components/StationHours';
 import { StationServices } from '@/components/StationServices';
 import { StationNearby } from '@/components/StationNearby';
+import { StationHistory } from '@/components/StationHistory';
 
 export const dynamicParams = false;
 
@@ -118,7 +119,19 @@ export default async function StationPage({ params }: PageProps) {
 
         <AdSlot />
 
-        {/* Historique: lo inserta F6 */}
+        <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] p-4 md:p-6 shadow-sm space-y-4">
+          <h2 className="text-lg md:text-xl font-extrabold text-[var(--text-main)] flex items-center gap-2">
+            <LineChart className="w-5 h-5 text-[var(--orange-primary)]" />
+            <span>Évolution du prix dans cette station</span>
+          </h2>
+          <StationHistory
+            stationId={station.id}
+            departmentCode={station.departmentCode}
+            departmentSlug={station.departmentSlug}
+            departmentName={station.department}
+            stationName={`${station.address}, ${station.city}`}
+          />
+        </div>
 
         <div className="space-y-3">
           <h2 className="text-lg md:text-xl font-extrabold text-[var(--text-main)] flex items-center gap-2">
