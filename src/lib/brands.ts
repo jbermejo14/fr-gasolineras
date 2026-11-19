@@ -12,7 +12,7 @@ export interface BrandGroup {
 /** Redes con página propia, en este orden (de más a menos estaciones). */
 export const BRAND_GROUPS: readonly BrandGroup[] = [
   { slug: 'totalenergies', name: 'TotalEnergies', logo: '/logos/totalenergies.png', keywords: ['totalenergies', 'total access', 'total contact', 'total'] },
-  { slug: 'intermarche', name: 'Intermarché', logo: null, keywords: ['intermarche'] },
+  { slug: 'intermarche', name: 'Intermarché', logo: '/logos/intermarche.svg', keywords: ['intermarche'] },
   { slug: 'carrefour', name: 'Carrefour', logo: '/logos/carrefour.webp', keywords: ['carrefour'] },
   {
     slug: 'systeme-u',
@@ -23,17 +23,17 @@ export const BRAND_GROUPS: readonly BrandGroup[] = [
   { slug: 'leclerc', name: 'E.Leclerc', logo: '/logos/leclerc.svg', keywords: ['leclerc'] },
   { slug: 'esso', name: 'Esso', logo: '/logos/esso.svg', keywords: ['esso'] },
   { slug: 'avia', name: 'Avia', logo: '/logos/avia.svg', keywords: ['avia'] },
-  { slug: 'auchan', name: 'Auchan', logo: null, keywords: ['auchan'] },
+  { slug: 'auchan', name: 'Auchan', logo: '/logos/auchan.svg', keywords: ['auchan'] },
   { slug: 'eni', name: 'Eni', logo: '/logos/eni.svg', keywords: ['eni', 'agip'] },
   { slug: 'netto', name: 'Netto', logo: '/logos/netto.svg', keywords: ['netto'] },
   { slug: 'elan', name: 'Elan', logo: '/logos/elan.svg', keywords: ['elan'] },
-  { slug: 'dyneff', name: 'Dyneff', logo: null, keywords: ['dyneff'] },
+  { slug: 'dyneff', name: 'Dyneff', logo: '/logos/dyneff.svg', keywords: ['dyneff'] },
   { slug: 'bp', name: 'BP', logo: '/logos/bp.webp', keywords: ['bp'] },
   { slug: 'shell', name: 'Shell', logo: '/logos/shell.webp', keywords: ['shell'] },
-  { slug: 'vito', name: 'Vito', logo: null, keywords: ['vito'] },
+  { slug: 'vito', name: 'Vito', logo: '/logos/vito.svg', keywords: ['vito'] },
   { slug: 'match', name: 'Match', logo: '/logos/match.png', keywords: ['match'] },
   { slug: 'aire-c', name: 'Aire C', logo: null, keywords: ['aire c'] },
-  { slug: 'spar', name: 'Spar', logo: null, keywords: ['spar'] },
+  { slug: 'spar', name: 'Spar', logo: '/logos/spar.svg', keywords: ['spar'] },
   { slug: 'dats-24', name: 'DATS 24', logo: null, keywords: ['dats 24'] },
 ];
 
