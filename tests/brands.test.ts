@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { BRAND_GROUPS, brandGroupOf, findBrandGroupBySlug } from '../src/lib/brands.ts';
 
 function slugOf(name: string | null): string | null {
@@ -13,13 +15,12 @@ test('BRAND_GROUPS tiene las 19 redes del contrato en su orden, con slugs único
   assert.equal(BRAND_GROUPS[BRAND_GROUPS.length - 1].slug, 'dats-24');
 });
 
-test('los logos iniciales son los del contrato', () => {
-  const withLogo = BRAND_GROUPS.filter((group) => group.logo !== null).map((group) => [group.slug, group.logo]);
-  assert.deepEqual(withLogo, [
-    ['carrefour', '/logos/carrefour.webp'],
-    ['bp', '/logos/bp.webp'],
-    ['shell', '/logos/shell.webp'],
-  ]);
+test('cada logo de BRAND_GROUPS existe en public/', () => {
+  const publicDir = path.join(import.meta.dirname, '..', 'public');
+  for (const group of BRAND_GROUPS) {
+    if (group.logo === null) continue;
+    assert.ok(fs.existsSync(path.join(publicDir, group.logo)), `Falta el logo de ${group.name}: public${group.logo}`);
+  }
 });
 
 test('findBrandGroupBySlug encuentra una red o devuelve null', () => {
