@@ -1,0 +1,190 @@
+import type * as Leaflet from 'leaflet';
+import type { FuelType } from '@/lib/fuels';
+import type { LightStation } from '@/lib/stationPayload';
+import {
+  CLUSTER_CELL_SIZE_PX,
+  CLUSTER_MIN_MEMBERS,
+  CLUSTER_MIN_SEPARATION_PX,
+  CLUSTERING_MAX_ZOOM,
+  VIEWPORT_PADDING_RATIO,
+  clusterPoints,
+  filterPointsInBounds,
+  mergeOverlappingClusters,
+  minNonNull,
+  padBounds,
+  shouldCluster,
+  splitSmallClusters,
+  type PointCluster,
+} from '@/lib/stationClustering';
+import {
+  buildClusterIconSpec,
+  buildPinIconSpec,
+  buildStationPopupHtml,
+  resolveStationPrice,
+} from './leafletMapHtml';
+
+const FIT_PADDING_PX = 40;
+const FIT_MAX_ZOOM = 15;
+const CLUSTER_FIT_PADDING_PX = 48;
+const POPUP_MAX_WIDTH_PX = 280;
+
+export interface MarkerSyncParams {
+  L: typeof Leaflet;
+  map: Leaflet.Map;
+  layer: Leaflet.LayerGroup;
+  /** Marcadores ya pintados por clave; permite no tocar los que siguen visibles (y su popup abierto). */
+  registry: Map<string, Leaflet.Marker>;
+  stations: readonly LightStation[];
+  fuel: FuelType;
+  highlightStationId?: string;
+  /** Id de la estación cuyo popup ya se abrió solo; evita reabrirlo al recrear el marcador. */
+  autoOpenedStationId: { current: string | null };
+}
+
+type MarkerEntry = { key: string; create: () => Leaflet.Marker };
+
+// Se comprueba que sean números y no que sean "verdaderos": la longitud 0 (meridiano de Greenwich) cruza Francia.
+function hasCoordinates(station: LightStation): boolean {
+  return Number.isFinite(station.lat) && Number.isFinite(station.lon);
+}
+
+function createStationMarker(params: MarkerSyncParams, station: LightStation): Leaflet.Marker {
+  const { L, fuel, highlightStationId } = params;
+  const price = resolveStationPrice(station, fuel);
+  const isHighlight = station.id === highlightStationId;
+  const pin = buildPinIconSpec(station, price, isHighlight);
+  const icon = L.divIcon({
+    className: 'custom-station-pin-wrapper',
+    html: pin.html,
+    iconSize: pin.iconSize,
+    iconAnchor: [pin.iconSize[0] / 2, pin.iconSize[1] / 2],
+  });
+  const marker = L.marker([station.lat, station.lon], { icon, title: station.city });
+  // El popup se construye al abrirse para no generar HTML de miles de estaciones.
+  marker.bindPopup(() => buildStationPopupHtml(station, price), { maxWidth: POPUP_MAX_WIDTH_PX });
+  return marker;
+}
+
+function clusterHasSinglePosition(cluster: PointCluster<LightStation>): boolean {
+  const { south, north, west, east } = cluster.bounds;
+  return south === north && west === east;
+}
+
+function zoomToCluster(map: Leaflet.Map, cluster: PointCluster<LightStation>): void {
+  if (clusterHasSinglePosition(cluster)) {
+    map.setView([cluster.lat, cluster.lon], CLUSTERING_MAX_ZOOM + 1);
+    return;
+  }
+  const { south, west, north, east } = cluster.bounds;
+  map.fitBounds(
+    [
+      [south, west],
+      [north, east],
+    ],
+    { padding: [CLUSTER_FIT_PADDING_PX, CLUSTER_FIT_PADDING_PX] }
+  );
+}
+
+function createClusterMarker(
+  params: MarkerSyncParams,
+  cluster: PointCluster<LightStation>,
+  minPrice: number | null
+): Leaflet.Marker {
+  const { L, map } = params;
+  const spec = buildClusterIconSpec(cluster.count, minPrice);
+  const icon = L.divIcon({
+    className: spec.className,
+    html: spec.html,
+    iconSize: [spec.sizePx, spec.sizePx],
+    iconAnchor: [spec.sizePx / 2, spec.sizePx / 2],
+  });
+  const marker = L.marker([cluster.lat, cluster.lon], { icon, title: spec.title });
+  marker.on('click', () => zoomToCluster(map, cluster));
+  return marker;
+}
+
+function buildStationEntry(params: MarkerSyncParams, station: LightStation): MarkerEntry {
+  return { key: `s:${station.id}`, create: () => createStationMarker(params, station) };
+}
+
+function buildClusterEntries(params: MarkerSyncParams, visible: LightStation[], zoom: number): MarkerEntry[] {
+  const { map, fuel, highlightStationId } = params;
+  const highlighted = visible.filter((station) => station.id === highlightStationId);
+  const clusterable = visible.filter((station) => station.id !== highlightStationId);
+  const project = (lat: number, lon: number) => map.project([lat, lon], zoom);
+  const cells = clusterPoints(clusterable, project, CLUSTER_CELL_SIZE_PX);
+  const merged = mergeOverlappingClusters(cells, project, CLUSTER_MIN_SEPARATION_PX);
+  const { clusters, singles } = splitSmallClusters(merged, CLUSTER_MIN_MEMBERS);
+
+  const clusterEntries = clusters.map((cluster): MarkerEntry => {
+    const minPrice = minNonNull(cluster.members.map((member) => resolveStationPrice(member, fuel)));
+    return {
+      key: `c:${zoom}:${cluster.key}:${cluster.count}:${minPrice}`,
+      create: () => createClusterMarker(params, cluster, minPrice),
+    };
+  });
+  const stationEntries = singles.concat(highlighted).map((station) => buildStationEntry(params, station));
+  return clusterEntries.concat(stationEntries);
+}
+
+function buildEntries(params: MarkerSyncParams): MarkerEntry[] {
+  const { map, stations } = params;
+  const zoom = map.getZoom();
+  const visibleBounds = map.getBounds();
+  const padded = padBounds(
+    {
+      south: visibleBounds.getSouth(),
+      west: visibleBounds.getWest(),
+      north: visibleBounds.getNorth(),
+      east: visibleBounds.getEast(),
+    },
+    VIEWPORT_PADDING_RATIO
+  );
+  const visible = filterPointsInBounds(stations, padded).filter(hasCoordinates);
+  if (shouldCluster(zoom)) return buildClusterEntries(params, visible, zoom);
+  return visible.map((station) => buildStationEntry(params, station));
+}
+
+/**
+ * Sincroniza la capa de marcadores con lo visible: quita los que ya no tocan y añade los nuevos,
+ * sin recrear los que siguen (así un popup abierto no se cierra al mover el mapa).
+ */
+export function syncVisibleMarkers(params: MarkerSyncParams): void {
+  const { layer, registry, highlightStationId, autoOpenedStationId } = params;
+  const entries = buildEntries(params);
+  const wantedKeys = new Set(entries.map((entry) => entry.key));
+
+  registry.forEach((marker, key) => {
+    if (wantedKeys.has(key)) return;
+    layer.removeLayer(marker);
+    registry.delete(key);
+  });
+
+  entries.forEach((entry) => {
+    if (registry.has(entry.key)) return;
+    const marker = entry.create();
+    layer.addLayer(marker);
+    registry.set(entry.key, marker);
+    const isUnopenedHighlight =
+      highlightStationId !== undefined &&
+      entry.key === `s:${highlightStationId}` &&
+      autoOpenedStationId.current !== highlightStationId;
+    if (isUnopenedHighlight) {
+      marker.openPopup();
+      autoOpenedStationId.current = highlightStationId;
+    }
+  });
+}
+
+/** Encuadra las estaciones al cambiar la lista (nunca en moveend). */
+export function fitStations(map: Leaflet.Map, stations: readonly LightStation[]): void {
+  const points = stations
+    .filter(hasCoordinates)
+    .map((station): [number, number] => [station.lat, station.lon]);
+  if (points.length === 0) return;
+  if (points.length === 1) {
+    map.setView(points[0], FIT_MAX_ZOOM);
+    return;
+  }
+  map.fitBounds(points, { padding: [FIT_PADDING_PX, FIT_PADDING_PX], maxZoom: FIT_MAX_ZOOM });
+}
