@@ -155,6 +155,32 @@ function HomeSeoText() {
         et publié par le Ministère de l&apos;Économie. Ils sont récupérés une fois par jour : avant de vous déplacer,
         gardez à l&apos;esprit qu&apos;un tarif a pu changer depuis la dernière mise à jour.
       </p>
+      <div className="pt-4 border-t border-[var(--border-subtle)] space-y-2">
+        <h3 className="text-base font-bold text-[var(--text-main)]">
+          Réseau européen Ododex
+        </h3>
+        <p>
+          Vous voyagez vers la péninsule ibérique ou vous achetez un véhicule d&apos;occasion ? Consultez nos outils complémentaires :
+        </p>
+        <div className="flex flex-wrap gap-3 pt-1">
+          <a
+            href="https://ododex.com/en/recalls"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-input)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-main)] hover:border-[var(--orange-primary)] transition-colors"
+          >
+            <span>Rappels constructeurs européens (Safety Gate)</span>
+          </a>
+          <a
+            href="https://ododex.com/es/gasolineras"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-input)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-main)] hover:border-[var(--orange-primary)] transition-colors"
+          >
+            <span>Prix des carburants en Espagne</span>
+          </a>
+        </div>
+      </div>
     </section>
   );
 }

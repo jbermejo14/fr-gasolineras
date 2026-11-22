@@ -78,6 +78,21 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Prix des carburants en France aujourd'hui",
       description:
         'Trouvez les stations-service les moins chères par département, commune et code postal, à partir des données officielles de prix-carburants.gouv.fr.',
+      images: [
+        {
+          url: `${getSiteUrl()}/brand/ododex-og.png`,
+          width: 1200,
+          height: 630,
+          alt: `Prix des carburants en France · ${SITE_NAME}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: "Prix des carburants en France aujourd'hui",
+      description:
+        'Trouvez les stations-service les moins chères par département, commune et code postal, à partir des données officielles de prix-carburants.gouv.fr.',
+      images: [`${getSiteUrl()}/brand/ododex-og.png`],
     },
     robots: {
       index: true,
