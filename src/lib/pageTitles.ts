@@ -5,9 +5,10 @@ import { departmentOfName, regionInName } from './geo.ts';
 import { loadAreaHistory } from './historique.ts';
 import type { AreaKind } from './historiqueFormat.ts';
 import { yearOfIso } from './historiqueFormat.ts';
-import { buildHistoriqueMetadata } from './historiquePageMeta.ts';
+import { buildHistoriqueMetadata, buildHistoriquePath } from './historiquePageMeta.ts';
 import type { Station } from './prixCarburants.ts';
-import { SITE_NAME } from './site.ts';
+import { SECTION_NAME, SITE_NAME } from './site.ts';
+import { buildSocialMetadata } from './socialMetadata.ts';
 import { elideA, stationCountLabel } from './stationInsights.ts';
 
 /** Sufijo que el layout añade a cada título (`title.template`). */
@@ -293,5 +294,10 @@ export function buildHistoriqueSeoMetadata(kind: AreaKind, slug: string): Metada
   if (!file) return metadata;
   const title = buildHistoriqueSeoTitle(kind, file.area.name, yearOfIso(file.weeks[0]));
   const description = descriptionShorten(metadata.description ?? '');
-  return { ...metadata, title, description, openGraph: { ...metadata.openGraph, title, description } };
+  return {
+    ...metadata,
+    title,
+    description,
+    ...buildSocialMetadata({ title, description, path: buildHistoriquePath(kind, slug), siteName: SECTION_NAME }),
+  };
 }

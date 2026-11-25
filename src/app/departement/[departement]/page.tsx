@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { getPrixData } from '@/lib/prixSnapshot';
 import { findRegionBySlug } from '@/lib/geo';
 import { summarizeStations } from '@/lib/prixCarburants';
-import { absoluteUrl, SITE_NAME } from '@/lib/site';
+import { absoluteUrl } from '@/lib/site';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { getBreadcrumbSchema } from '@/lib/seo';
 import { buildDepartmentDescription, buildDepartmentTitle } from '@/lib/pageTitles';
 import { AdSlot } from '@/components/AdSlot';
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: { canonical },
-    openGraph: { type: 'website', url: canonical, title, description, siteName: SITE_NAME },
+    ...buildSocialMetadata({ title, description, path: departmentPath(departement) }),
   };
 }
 

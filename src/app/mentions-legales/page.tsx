@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import { LegalPage } from '@/components/LegalPage';
 import { getTitular, type Titular } from '@/lib/legal';
 import { legalHolderValue } from '@/lib/legalText';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { SITE_NAME, absoluteUrl } from '@/lib/site';
 
 const PATH = '/mentions-legales';
+const META_TITLE = 'Mentions légales';
+const META_DESCRIPTION = `Mentions légales de ${SITE_NAME} : éditeur, hébergeur, source des données et limites de responsabilité.`;
 const URL_PRIX_CARBURANTS = 'https://www.prix-carburants.gouv.fr';
 const URL_CLOUDFLARE = 'https://www.cloudflare.com';
 const URL_ENSEIGNES_DATASET = 'https://www.data.gouv.fr/datasets/referentiel-des-noms-et-enseignes-de-stations-service-enrichi-par-openstreetmap';
@@ -13,10 +16,11 @@ const URL_ODBL = 'https://opendatacommons.org/licenses/odbl/1-0/';
 const URL_LICENCE_ETALAB = 'https://www.etalab.gouv.fr/licence-ouverte-open-licence/';
 
 export const metadata: Metadata = {
-  title: 'Mentions légales',
-  description: `Mentions légales de ${SITE_NAME} : éditeur, hébergeur, source des données et limites de responsabilité.`,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   robots: { index: false, follow: true },
-  alternates: { canonical: absoluteUrl(PATH) }
+  alternates: { canonical: absoluteUrl(PATH) },
+  ...buildSocialMetadata({ title: META_TITLE, description: META_DESCRIPTION, path: PATH })
 };
 
 export default function MentionsLegalesPage() {

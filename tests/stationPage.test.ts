@@ -31,10 +31,10 @@ test('la ficha y sus componentes no formatean importes con toFixed', () => {
   }
 });
 
-test('la ficha pasa los importes por formatEuros, usa SITE_NAME en openGraph y monta el histórico de la estación', () => {
+test('la ficha pasa los importes por formatEuros, delega openGraph en buildSocialMetadata y monta el histórico de la estación', () => {
   const page = fs.readFileSync(PAGE_PATH, 'utf8');
   assert.match(fs.readFileSync(PRICES_PATH, 'utf8'), /formatEuros\(price \* TANK_LITERS\)/);
-  assert.match(page, /siteName: SITE_NAME/);
+  assert.match(page, /\.\.\.buildSocialMetadata\(/);
   assert.match(page, /<StationHistory\b/, 'la ficha debe usar <StationHistory');
 });
 

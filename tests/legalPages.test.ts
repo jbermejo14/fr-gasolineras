@@ -22,9 +22,10 @@ for (const { dir, route, title } of LEGAL_ROUTES) {
 
   test(`${route}: exporta metadata con título, canonical e indexación`, () => {
     assert.match(source, /export const metadata: Metadata = \{/);
-    assert.ok(source.includes(`title: '${title}'`), `falta el título « ${title} »`);
+    assert.ok(source.includes(`const META_TITLE = '${title}';`), `falta el título « ${title} »`);
+    assert.match(source, /title: META_TITLE,/);
     assert.ok(source.includes(`const PATH = '${route}';`));
-    assert.match(source, /description: /);
+    assert.match(source, /description: META_DESCRIPTION,/);
     assert.match(source, /alternates: \{ canonical: absoluteUrl\(PATH\) \}/);
     assert.match(source, /robots: \{ index: false, follow: true \}/);
   });

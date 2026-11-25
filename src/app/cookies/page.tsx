@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/LegalPage';
 import { getAdSenseClient } from '@/lib/adsense';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { SITE_NAME, absoluteUrl } from '@/lib/site';
 
 const PATH = '/cookies';
+const META_TITLE = 'Politique relative aux cookies';
+const META_DESCRIPTION = `Les cookies et le stockage local utilisés par ${SITE_NAME}, et comment les gérer.`;
 const URL_COOKIES_GOOGLE = 'https://policies.google.com/technologies/cookies?hl=fr';
 
 export const metadata: Metadata = {
-  title: 'Politique relative aux cookies',
-  description: `Les cookies et le stockage local utilisés par ${SITE_NAME}, et comment les gérer.`,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   robots: { index: false, follow: true },
-  alternates: { canonical: absoluteUrl(PATH) }
+  alternates: { canonical: absoluteUrl(PATH) },
+  ...buildSocialMetadata({ title: META_TITLE, description: META_DESCRIPTION, path: PATH })
 };
 
 export default function CookiesPage() {

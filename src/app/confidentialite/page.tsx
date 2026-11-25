@@ -3,17 +3,21 @@ import { LegalPage } from '@/components/LegalPage';
 import { getAdSenseClient } from '@/lib/adsense';
 import { getTitular, type Titular } from '@/lib/legal';
 import { legalHolderValue } from '@/lib/legalText';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { SITE_NAME, absoluteUrl } from '@/lib/site';
 
 const PATH = '/confidentialite';
+const META_TITLE = 'Politique de confidentialité';
+const META_DESCRIPTION = `Comment ${SITE_NAME} traite les données personnelles, conformément au RGPD.`;
 const URL_AEPD = 'https://www.aepd.es';
 const URL_CNIL_PLAINTE = 'https://www.cnil.fr/fr/plaintes';
 
 export const metadata: Metadata = {
-  title: 'Politique de confidentialité',
-  description: `Comment ${SITE_NAME} traite les données personnelles, conformément au RGPD.`,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   robots: { index: false, follow: true },
-  alternates: { canonical: absoluteUrl(PATH) }
+  alternates: { canonical: absoluteUrl(PATH) },
+  ...buildSocialMetadata({ title: META_TITLE, description: META_DESCRIPTION, path: PATH })
 };
 
 export default function ConfidentialitePage() {

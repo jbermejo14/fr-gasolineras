@@ -5,6 +5,7 @@ import { formatIsoDateFr } from './format.ts';
 import { FUEL_LABELS } from './fuels.ts';
 import { HISTORY_HEADLINE_FUELS, describeAreaPlace, formatMilliEuro, formatSignedPercent, summarizeSeries } from './historiqueStats.ts';
 import { loadAreaHistory } from './historique.ts';
+import { buildSocialMetadata } from './socialMetadata.ts';
 import { SECTION_NAME, absoluteUrl } from './site.ts';
 
 const HISTORIQUE_BASE_PATH = '/historique';
@@ -77,11 +78,12 @@ export function buildHistoriqueMetadata(kind: AreaKind, slug: string): Metadata 
   }
   const title = buildHistoriqueTitle(kind, file.area.name, file.weeks);
   const description = buildHistoriqueDescription(file.area, file.weeks);
-  const canonical = absoluteUrl(buildHistoriquePath(kind, slug));
+  const path = buildHistoriquePath(kind, slug);
+  const canonical = absoluteUrl(path);
   return {
     title,
     description,
     alternates: { canonical },
-    openGraph: { type: 'website', url: canonical, title, description, siteName: SECTION_NAME },
+    ...buildSocialMetadata({ title, description, path, siteName: SECTION_NAME }),
   };
 }

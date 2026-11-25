@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { getPrixData } from '@/lib/prixSnapshot';
 import { summarizeBrands } from '@/lib/brandInsights';
-import { absoluteUrl, SITE_NAME } from '@/lib/site';
+import { absoluteUrl } from '@/lib/site';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { getBreadcrumbSchema } from '@/lib/seo';
 import { AdSlot } from '@/components/AdSlot';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: BRAND_INDEX_TITLE,
     description: BRAND_INDEX_DESCRIPTION,
     alternates: { canonical },
-    openGraph: { type: 'website', url: canonical, title: BRAND_INDEX_TITLE, description: BRAND_INDEX_DESCRIPTION, siteName: SITE_NAME },
+    ...buildSocialMetadata({ title: BRAND_INDEX_TITLE, description: BRAND_INDEX_DESCRIPTION, path: BRAND_INDEX_PATH }),
   };
 }
 

@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import { AdSenseScript } from '@/components/AdSenseScript';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { SITE_NAME, absoluteUrl, getSiteUrl } from '@/lib/site';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -75,28 +76,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: homeUrl,
     },
-    openGraph: {
-      type: 'website',
-      locale: 'fr_FR',
-      url: homeUrl,
-      siteName: SITE_NAME,
-      title: HOME_TITLE,
-      description,
-      images: [
-        {
-          url: `${getSiteUrl()}/brand/ododex-og.png`,
-          width: 1200,
-          height: 630,
-          alt: `Prix des carburants en France · ${SITE_NAME}`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: HOME_TITLE,
-      description,
-      images: [`${getSiteUrl()}/brand/ododex-og.png`],
-    },
+    ...buildSocialMetadata({ title: HOME_TITLE, description, path: '/' }),
     robots: {
       index: true,
       follow: true,

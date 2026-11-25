@@ -8,7 +8,8 @@ import {
   type PrixSnapshot,
   type Station,
 } from '@/lib/prixCarburants';
-import { absoluteUrl, SITE_NAME } from '@/lib/site';
+import { absoluteUrl } from '@/lib/site';
+import { buildSocialMetadata } from '@/lib/socialMetadata';
 import { getBreadcrumbSchema, getGasStationSchema } from '@/lib/seo';
 import { nearbyStations, savingsReferences, stationSummary } from '@/lib/stationInsights';
 import { buildStationDescription, buildStationTitle } from '@/lib/pageTitles';
@@ -59,7 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: { canonical },
-    openGraph: { type: 'website', url: canonical, title, description, siteName: SITE_NAME },
+    ...buildSocialMetadata({ title, description, path: stationPath(station) }),
   };
 }
 
